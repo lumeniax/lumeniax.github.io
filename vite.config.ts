@@ -29,6 +29,9 @@ export default defineConfig({
     host: "0.0.0.0",
     allowedHosts: true,
     hmr: false,
+    watch: {
+      ignored: ["**/.local/**"],
+    },
   },
   preview: { port: 4173, host: "0.0.0.0", allowedHosts: true },
 });
