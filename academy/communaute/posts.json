@@ -1,0 +1,18 @@
+[
+  {
+    "title": "Partage de ressources pour progresser avec discipline",
+    "slug": "partage-ressources-productivite",
+    "category": "Productivité",
+    "date": "Communauté",
+    "icon": "⚡",
+    "description": "Un espace pour recommander outils, lectures, méthodes et pratiques utiles."
+  },
+  {
+    "title": "Comment gérez-vous le stress au travail ?",
+    "slug": "question-gestion-stress",
+    "category": "Bien-être",
+    "date": "Discussion",
+    "icon": "◌",
+    "description": "Question ouverte à la communauté : stratégies, rituels et retours d'expérience."
+  }
+]
