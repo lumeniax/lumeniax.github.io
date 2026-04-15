@@ -165,3 +165,128 @@
     @apply font-serif;
   }
 }
+
+.article-html-content {
+  color: hsl(var(--foreground));
+}
+
+.article-html-content .article-header {
+  display: none;
+}
+
+.article-html-content .article-intro {
+  font-size: 1.1rem;
+  line-height: 1.75;
+  margin-bottom: 2rem;
+  font-style: italic;
+  border-left: 2px solid hsl(var(--primary));
+  padding-left: 1rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.article-html-content h2 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  color: hsl(var(--foreground));
+}
+
+.article-html-content h3 {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: hsl(var(--foreground));
+}
+
+.article-html-content p {
+  font-size: 1rem;
+  line-height: 1.8;
+  margin-bottom: 1.25rem;
+  color: hsl(var(--foreground) / 90%);
+}
+
+.article-html-content ul,
+.article-html-content ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.article-html-content ul li {
+  list-style-type: disc;
+  margin-bottom: 0.5rem;
+  color: hsl(var(--foreground) / 90%);
+  line-height: 1.75;
+}
+
+.article-html-content ol li {
+  list-style-type: decimal;
+  margin-bottom: 0.5rem;
+  color: hsl(var(--foreground) / 90%);
+  line-height: 1.75;
+}
+
+.article-html-content strong,
+.article-html-content b {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.article-html-content em,
+.article-html-content i {
+  font-style: italic;
+}
+
+.article-html-content blockquote {
+  border-left: 4px solid hsl(var(--primary) / 50%);
+  padding-left: 1rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  margin: 1.5rem 0;
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+}
+
+.article-html-content img {
+  max-width: 100%;
+  border-radius: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.article-html-content figure {
+  margin: 2rem 0;
+}
+
+.article-html-content figcaption {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.article-html-content .tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  background: hsl(var(--primary) / 10%);
+  color: hsl(var(--primary));
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.article-html-content .back-link,
+.article-html-content .back-to-top,
+.article-html-content .article-footer {
+  display: none;
+}
+
+.article-html-content a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
