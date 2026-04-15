@@ -26,16 +26,57 @@ src/
   App.tsx        # Main app with routing
   main.tsx       # Entry point
   index.css      # Global styles + Tailwind directives
-public/          # Static assets
+public/
+  articles/      # SOURCE + built article files
+    *.html       # Full HTML article files (edit/add/remove here)
+    articles.json        # Auto-generated manifest (do not edit manually)
+    content/     # Auto-generated article body files (do not edit)
+scripts/
+  generate-manifest.js   # Reads public/articles/*.html → builds manifest + content files
 dist/            # Build output
+```
+
+## Article System
+
+Articles are managed via HTML files in `public/articles/`:
+
+1. **Add** a new article: drop a `.html` file in `public/articles/`
+2. **Remove** an article: delete its `.html` file
+3. **Edit** an article: modify its `.html` file
+
+The manifest (`articles.json`) and extracted content (`content/`) are **auto-generated** on every `npm run dev` and `npm run build`. You can also run it manually:
+
+```bash
+npm run manifest
+```
+
+### HTML Article Format
+
+Add these meta tags to your HTML file's `<head>`:
+```html
+<meta name="lumenia:title" content="Your Article Title"/>
+<meta name="lumenia:category" content="Category Name"/>
+<meta name="lumenia:date" content="15 avril 2026"/>
+<meta name="lumenia:icon" content="✦"/>
+<meta name="description" content="Short description for the card..."/>
+```
+
+Article content should be wrapped in:
+```html
+<div class="article-body">
+  <p>Your content here...</p>
+  <h2>Section heading</h2>
+  <p>More content...</p>
+</div>
 ```
 
 ## Development
 
 ```bash
 npm install
-npm run dev      # Starts dev server on port 5000
-npm run build    # Production build to dist/
+npm run dev      # Generates manifest + starts dev server on port 5000
+npm run build    # Generates manifest + production build to dist/
+npm run manifest # Only regenerate articles.json and content files
 ```
 
 ## Deployment
@@ -48,3 +89,4 @@ Configured as a **static** deployment:
 
 - Dev server runs on `0.0.0.0:5000` with `allowedHosts: true` for Replit proxy compatibility
 - Path alias `@` maps to `src/`
+- The `articles/` folder in `public/` is the single source of truth for articles
