@@ -5,6 +5,7 @@ import path from "path";
 
 export default defineConfig({
   base: "/",
+  appType: "spa",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: { "@": path.resolve(__dirname, "src") },

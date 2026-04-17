@@ -1,312 +1,535 @@
-import { motion } from "framer-motion";
-import { fadeUp, staggerContainer } from "@/lib/animations";
+import {
+  ArrowRight,
+  Calendar,
+  CheckCircle,
+  HeartHandshake,
+  Lightbulb,
+  Search,
+  Settings,
+  Zap,
+} from "lucide-react";
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle, PenTool, Palette, Video, Zap, GraduationCap, ShoppingBag, Search, Lightbulb, Settings, HeartHandshake } from "lucide-react";
+
+const serviceCategories = [
+  {
+    id: "presence",
+    title: "Présence Digitale",
+    icon: "🌐",
+    tagline: "Soyez visible là où sont vos clients",
+    description:
+      "Votre entreprise mérite une vitrine professionnelle. Nous créons des sites web modernes, rapides et optimisés pour convertir vos visiteurs en clients.",
+    problem: "Invisible en ligne ou site non professionnel",
+    result: "Visibilité 24h/24 et crédibilité renforcée",
+    color: "border-blue-500",
+    bgColor: "bg-blue-50",
+    services: [
+      "Sites web responsifs et modernes",
+      "E-commerce & boutiques en ligne",
+      "Digitalisation des églises & institutions",
+      "Portails & plateformes web",
+      "Intégrations API & outils tiers",
+      "Maintenance & support technique",
+      "Optimisation performance & vitesse",
+    ],
+  },
+  {
+    id: "contenu",
+    title: "Contenu & Design",
+    icon: "🎨",
+    tagline: "Une image qui inspire confiance et désir",
+    description:
+      "Du logo au montage vidéo, en passant par la rédaction premium, nous créons les supports visuels et éditoriaux qui racontent votre histoire avec impact.",
+    problem: "Communication sans cohérence ni impact visuel",
+    result: "Marque forte et contenus qui convertissent",
+    color: "border-yellow-500",
+    bgColor: "bg-yellow-50",
+    services: [
+      "Logos & identité visuelle complète",
+      "Flyers, brochures et bannières",
+      "Présentations PowerPoint premium",
+      "Montage vidéo professionnel",
+      "Voix off IA multilingues",
+      "Infographies & data visualisation",
+      "CV optimisés IA & lettres de motivation",
+    ],
+  },
+  {
+    id: "redaction",
+    title: "Rédaction & Stratégie",
+    icon: "📝",
+    tagline: "Des mots qui convainquent et des plans qui fonctionnent",
+    description:
+      "Rédaction professionnelle et stratégique pour vos projets : business plans, propositions, e-books et contenu copywriting orienté conversion.",
+    problem: "Difficulté à convaincre partenaires ou clients à l'écrit",
+    result: "Documents percutants qui débloquent projets et financements",
+    color: "border-green-500",
+    bgColor: "bg-green-50",
+    services: [
+      "Plans d'affaires détaillés",
+      "Propositions de projets ONG",
+      "E-books et guides professionnels",
+      "Copywriting pour sites web",
+      "Articles et blogs professionnels",
+      "Discours et présentations orales",
+      "Rapports & dossiers institutionnels",
+    ],
+  },
+  {
+    id: "ia",
+    title: "IA & Automatisation",
+    icon: "🤖",
+    tagline: "Automatisez, optimisez, surpassez vos concurrents",
+    description:
+      "Exploitez la puissance de l'IA pour automatiser vos processus, améliorer votre visibilité sur Google et gérer vos clients plus efficacement.",
+    problem: "Processus manuels lents et absence de visibilité SEO",
+    result: "Gain de temps, plus de prospects qualifiés, meilleur ROI",
+    color: "border-purple-500",
+    bgColor: "bg-purple-50",
+    services: [
+      "Chatbots IA intelligents",
+      "Optimisation SEO avancée",
+      "Gestion CRM & relation client",
+      "Automatisation des processus",
+      "Analyse de données & reporting",
+      "Intégration outils IA dans votre workflow",
+      "Consulting stratégie digitale",
+    ],
+  },
+  {
+    id: "formation",
+    title: "Formation & Accompagnement",
+    icon: "🎓",
+    tagline: "Montez en compétences, prenez votre indépendance",
+    description:
+      "Formations pratiques en IA, marketing digital et entrepreneuriat, conçues pour les réalités africaines. Du débutant au professionnel.",
+    problem: "Équipes ou entrepreneurs non autonomes sur le digital",
+    result: "Compétences opérationnelles et leadership digital acquis",
+    color: "border-orange-500",
+    bgColor: "bg-orange-50",
+    services: [
+      "Formation IA pratique",
+      "Cours marketing digital",
+      "Webinaires et ateliers thématiques",
+      "Mentorat professionnel personnalisé",
+      "Coaching entrepreneurial",
+      "Programmes d'apprentissage sur mesure",
+      "Certification digitale",
+    ],
+  },
+  {
+    id: "entreprises",
+    title: "Solutions Entreprises",
+    icon: "💼",
+    tagline: "L'écosystème digital complet pour votre structure",
+    description:
+      "Pour les PME, institutions et grandes organisations qui ont besoin d'un partenaire digital de confiance sur le long terme.",
+    problem: "Transformation digitale complexe et non coordonnée",
+    result: "Écosystème digital unifié, performant et évolutif",
+    color: "border-blue-900",
+    bgColor: "bg-blue-50",
+    services: [
+      "Audit digital complet",
+      "Stratégie de transformation digitale",
+      "Déploiement d'outils collaboratifs",
+      "Formation et conduite du changement",
+      "Support technique dédié",
+      "Partenariat long terme",
+      "Reporting et optimisation continue",
+    ],
+  },
+];
+
+const processSteps = [
+  {
+    number: "01",
+    icon: Search,
+    title: "Analyse de vos besoins",
+    description:
+      "Consultation gratuite pour comprendre vos objectifs, vos contraintes et les meilleures opportunités.",
+  },
+  {
+    number: "02",
+    icon: Lightbulb,
+    title: "Proposition personnalisée",
+    description:
+      "Devis détaillé, planning clair et solution adaptée à votre budget et vos délais.",
+  },
+  {
+    number: "03",
+    icon: Settings,
+    title: "Réalisation par notre réseau",
+    description:
+      "Les experts du réseau Lumeniax exécutent votre projet avec rigueur et professionnalisme.",
+  },
+  {
+    number: "04",
+    icon: HeartHandshake,
+    title: "Révisions & livraison",
+    description:
+      "Ajustements, validations et livraison finale avec formation et support continu.",
+  },
+];
+
+const pricingPlans = [
+  {
+    name: "Starter",
+    price: "À partir de",
+    amount: "5 000",
+    currency: "FCFA",
+    description: "Pour les petits projets et besoins ponctuels",
+    features: [
+      "CV optimisé IA ou logo simple",
+      "Vidéo courte ou flyer promotionnel",
+      "Rédaction d'un document professionnel",
+      "Support par WhatsApp",
+      "1 révision incluse",
+    ],
+  },
+  {
+    name: "Professional",
+    price: "À partir de",
+    amount: "50 000",
+    currency: "FCFA",
+    description: "Pour les PME, entrepreneurs et porteurs de projets",
+    badge: "Populaire",
+    highlighted: true,
+    features: [
+      "Site web complet et responsive",
+      "Design graphique & identité visuelle",
+      "Vidéos promotionnelles professionnelles",
+      "Business plan ou plan marketing",
+      "Support prioritaire + formation incluse",
+    ],
+  },
+  {
+    name: "Enterprise",
+    price: "Sur devis",
+    amount: "Personnalisé",
+    currency: "",
+    description: "Solutions complètes pour structures exigeantes",
+    features: [
+      "Écosystème digital complet",
+      "Chatbots IA & automatisation",
+      "Formation d'équipe sur mesure",
+      "Partenariat et support dédié 24/7",
+      "Consulting stratégique long terme",
+    ],
+  },
+];
 
 export default function StudioServices() {
-  const serviceCategories = [
-    {
-      id: 'redaction',
-      title: 'Rédaction & Contenu',
-      icon: <PenTool className="w-8 h-8" />,
-      tagline: 'Vos mots, amplifiés par l\'IA',
-      description: 'Contenus professionnels et persuasifs, du CV au livre, optimisés pour convertir et inspirer.',
-      problem: 'Contenus génériques sans impact',
-      result: 'Textes professionnels et mémorables',
-      color: 'border-primary/50',
-      bgColor: 'bg-primary/5',
-      services: [
-        'CV professionnels optimisés IA',
-        'Lettres de motivation personnalisées',
-        'Optimisation profils LinkedIn',
-        'Discours & exhortations chrétiennes',
-        'Ebooks & livres autobiographiques',
-        'Articles de blog SEO',
-        'Fiches produits e-commerce',
-        'Descriptions Airbnb',
-        'Scripts YouTube & TikTok',
-        'Newsletters & résumés de livres',
-        'Mémoires universitaires',
-        'Traduction automatique améliorée'
-      ]
-    },
-    {
-      id: 'design',
-      title: 'Design & Identité Visuelle',
-      icon: <Palette className="w-8 h-8" />,
-      tagline: 'Votre marque, visuellement distinctive',
-      description: 'Logos, affiches, brochures et designs numériques qui captivent et convertissent votre audience.',
-      problem: 'Visuels génériques et peu professionnels',
-      result: 'Identité visuelle cohérente et attrayante',
-      color: 'border-secondary/50',
-      bgColor: 'bg-secondary/5',
-      services: [
-        'Logos avec IA',
-        'Affiches & flyers pour églises',
-        'Cartes de visite & badges',
-        'Couvertures de livres',
-        'Miniatures YouTube',
-        'Visuels Instagram & PowerPoint',
-        'Brochures & catalogues produits',
-        'Mockups & packaging',
-        'Invitations numériques',
-        'Calendriers & stickers digitaux',
-        'Templates Canva personnalisés',
-        'Tableaux muraux & BD éducatives',
-        'Images réalistes pour publicité'
-      ]
-    },
-    {
-      id: 'video',
-      title: 'Vidéo, Audio & Multimédia',
-      icon: <Video className="w-8 h-8" />,
-      tagline: 'Contenu audiovisuel qui engage',
-      description: 'Vidéos, podcasts et contenus multimédias automatisés pour YouTube, TikTok et réseaux sociaux.',
-      problem: 'Production vidéo coûteuse et chronophage',
-      result: 'Contenus audiovisuels professionnels',
-      color: 'border-accent/50',
-      bgColor: 'bg-accent/5',
-      services: [
-        'Vidéos motivationnelles & explicatives',
-        'Montage vidéo automatisé',
-        'Vidéos pour églises',
-        'Voix off IA & livres audio',
-        'Podcasts & méditations audio',
-        'Clips TikTok & reels Instagram',
-        'Sous-titrage automatique multilingue',
-        'Jingles & publicités vidéo',
-        'Storytelling vidéo',
-        'Vidéos éducatives pour enfants',
-        'Contenus YouTube automatisés',
-        'Conversion PowerPoint en vidéo',
-        'Vidéos immobilières attractives'
-      ]
-    },
-    {
-      id: 'business',
-      title: 'Business, IA & Automatisation',
-      icon: <Zap className="w-8 h-8" />,
-      tagline: 'Automatisez, optimisez, croissez',
-      description: 'Chatbots, SEO, CRM et automatisation pour transformer votre présence digitale en machine de croissance.',
-      problem: 'Processus manuels, absence de stratégie',
-      result: 'Systèmes automatisés et rentables',
-      color: 'border-primary/50',
-      bgColor: 'bg-primary/5',
-      services: [
-        'Chatbots WhatsApp intelligents',
-        'Automatisation réponses clients',
-        'Sites web simples avec IA',
-        'Landing pages optimisées',
-        'Optimisation SEO locale',
-        'Gestion réseaux sociaux automatisée',
-        'Calendriers éditoriaux',
-        'Analyse de marché avec IA',
-        'Business plans & plans d\'affaires',
-        'Propositions projets ONG',
-        'Automatisation facturation',
-        'Formulaires intelligents',
-        'Tableaux Excel automatisés',
-        'CRM simple & systèmes d\'inscription'
-      ]
-    },
-    {
-      id: 'formation',
-      title: 'Formation & Produits Digitaux',
-      icon: <GraduationCap className="w-8 h-8" />,
-      tagline: 'Montez en compétences, créez des revenus',
-      description: 'Formations pratiques et produits digitaux pour maîtriser l\'IA, le marketing et l\'entrepreneuriat africain.',
-      problem: 'Manque de compétences digitales',
-      result: 'Expertise et revenus passifs',
-      color: 'border-secondary/50',
-      bgColor: 'bg-secondary/5',
-      services: [
-        'Formation IA pour débutants',
-        'Formation Prompt Engineering',
-        'Formation Canva',
-        'Formation création CV',
-        'Formation création ebook',
-        'Formation marketing digital',
-        'Coaching orientation scolaire',
-        'Supports scolaires interactifs',
-        'Vente ebooks',
-        'Templates business plan',
-        'Prompts IA prêts à l\'emploi',
-        'Packs prédications',
-        'Guides pratiques africains',
-        'Modèles PowerPoint premium'
-      ]
-    }
-  ];
-
-  const processSteps = [
-    { number: '01', icon: <Search className="w-5 h-5" />, title: 'Analyse', description: 'Consultation gratuite pour comprendre vos besoins spécifiques.' },
-    { number: '02', icon: <Lightbulb className="w-5 h-5" />, title: 'Stratégie', description: 'Proposition personnalisée avec devis et planning détaillé.' },
-    { number: '03', icon: <Settings className="w-5 h-5" />, title: 'Exécution', description: 'Nos experts livrent votre projet avec excellence.' },
-    { number: '04', icon: <HeartHandshake className="w-5 h-5" />, title: 'Support', description: 'Ajustements, optimisation et support continu.' }
-  ];
-
-  const whyChooseUs = [
-    { title: 'Expertise IA', desc: 'Nous utilisons les dernières technologies d\'IA pour automatiser et optimiser.' },
-    { title: 'Africain-Centré', desc: 'Solutions adaptées au marché africain et à votre contexte local.' },
-    { title: 'Tarifs Accessibles', desc: 'Qualité premium sans prix exorbitant, même pour PME et startups.' },
-    { title: 'Support Réactif', desc: 'Équipe disponible pour vos questions et ajustements.' },
-    { title: 'Résultats Mesurables', desc: 'Nous suivons les KPIs et optimisons pour votre ROI.' },
-    { title: 'Confidentialité', desc: 'Vos données et projets sont sécurisés et confidentiels.' }
-  ];
-
   return (
-    <div className="w-full pt-32 pb-20 overflow-hidden">
-      <div className="container mx-auto px-6 md:px-12">
-        {/* HERO SECTION */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-          className="mb-24 text-center max-w-4xl mx-auto"
-        >
-          <motion.div variants={fadeUp} className="mb-6 inline-flex items-center space-x-2">
-            <div className="w-8 h-[1px] bg-primary"></div>
-            <span className="text-xs font-medium tracking-widest text-primary uppercase">Expertise Complète</span>
-          </motion.div>
-          <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl font-serif font-medium mb-8 leading-tight">
-            Tous nos <span className="italic text-primary">Services</span> Premium
-          </motion.h1>
-          <motion.p variants={fadeUp} className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-            De la rédaction à la vidéo, du design à l'automatisation : 5 catégories de services pour transformer votre présence digitale et générer des revenus.
-          </motion.p>
-          <motion.div variants={fadeUp} className="mt-10 flex flex-wrap justify-center gap-4">
-            <Link href="/studio/contact">
-              <Button size="lg" className="h-12 px-8 text-sm uppercase tracking-widest">
-                Démarrer un projet <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-          </motion.div>
-        </motion.div>
-
-        {/* SERVICES GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-32">
-          {serviceCategories.map((cat, index) => (
-            <motion.div
-              key={cat.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className={`p-8 md:p-10 border ${cat.color} rounded-3xl ${cat.bgColor} relative group hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500`}
-            >
-              <div className="flex justify-between items-start mb-8">
-                <div className="p-4 bg-background rounded-2xl text-primary shadow-sm group-hover:scale-110 transition-transform duration-500">
-                  {cat.icon}
-                </div>
-                <span className="text-4xl font-serif opacity-10 font-bold">0{index + 1}</span>
-              </div>
-              
-              <h2 className="text-2xl font-serif font-medium mb-2">{cat.title}</h2>
-              <p className="text-primary text-sm font-medium mb-4 italic">{cat.tagline}</p>
-              <p className="text-muted-foreground mb-8 leading-relaxed">{cat.description}</p>
-              
-              <div className="grid grid-cols-1 gap-2 mb-8 max-h-64 overflow-y-auto pr-2">
-                {cat.services.map((s, i) => (
-                  <div key={i} className="flex items-start text-sm text-foreground/80">
-                    <CheckCircle className="w-4 h-4 text-primary mr-3 flex-shrink-0 mt-0.5" />
-                    <span>{s}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pt-6 border-t border-border/50 flex items-center justify-between">
-                <div className="text-xs">
-                  <span className="text-muted-foreground block uppercase tracking-tighter">Résultat</span>
-                  <span className="font-medium text-foreground text-sm">{cat.result}</span>
-                </div>
-                <Link href="/studio/contact">
-                  <Button variant="ghost" size="sm" className="group/btn">
-                    Détails <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* WHY CHOOSE US */}
-        <div className="bg-card border border-border/50 rounded-[2.5rem] p-8 md:p-16 mb-32 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl" />
-          
-          <div className="relative z-10">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-serif font-medium mb-4">Pourquoi nous choisir ?</h2>
-              <p className="text-muted-foreground">Nous combinons expertise, innovation et accessibilité pour votre succès.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {whyChooseUs.map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                  className="p-6 border border-border/50 rounded-2xl bg-background/50 hover:border-primary/30 transition-colors"
-                >
-                  <h3 className="font-serif font-medium text-lg mb-2 text-primary">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </motion.div>
-              ))}
+    <div className="min-h-screen">
+      <section className="bg-gradient-to-br from-blue-900 to-black text-white pt-32 pb-20 md:pt-40 md:pb-28">
+        <div className="container mx-auto px-6 md:px-12">
+          <div className="max-w-3xl">
+            <span className="mb-6 inline-block rounded-full bg-yellow-500/20 px-4 py-1.5 text-sm font-bold text-yellow-400">
+              Nos services
+            </span>
+            <h1 className="mb-6 text-4xl font-bold md:text-6xl">
+              Des solutions digitales complètes,{" "}
+              <span className="text-yellow-400">orientées résultats</span>
+            </h1>
+            <p className="mb-8 text-xl leading-relaxed text-gray-200">
+              Six pôles d'expertise complémentaires pour couvrir l'intégralité
+              de votre transformation digitale, de la présence web à
+              l'automatisation IA, en passant par la formation et la stratégie.
+            </p>
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <Link
+                href="/studio/contact"
+                className="flex items-center justify-center gap-2 rounded-lg bg-yellow-500 px-8 py-4 font-bold text-blue-900 shadow-lg transition-all duration-200 hover:scale-105 hover:bg-yellow-400"
+              >
+                <Calendar className="h-5 w-5" />
+                Réserver une consultation gratuite
+              </Link>
+              <a
+                href="https://wa.me/22893392515"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-lg border-2 border-yellow-500/60 px-8 py-4 font-bold text-yellow-300 transition-all duration-200 hover:border-yellow-500 hover:text-yellow-400"
+              >
+                WhatsApp direct
+              </a>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* PROCESS SECTION */}
-        <div className="bg-card border border-border/50 rounded-[2.5rem] p-8 md:p-16 relative overflow-hidden mb-32">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/5 rounded-full -mr-32 -mt-32 blur-3xl" />
-          
-          <div className="relative z-10">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-serif font-medium mb-4">Notre Processus</h2>
-              <p className="text-muted-foreground">Une méthode structurée pour garantir l'excellence de chaque projet.</p>
-            </div>
+      <section className="bg-white py-20 md:py-28">
+        <div className="container mx-auto px-6 md:px-12">
+          <div className="mb-14 text-center">
+            <h2 className="mb-4 text-3xl font-bold text-blue-900 md:text-4xl">
+              Nos 6 pôles d'expertise
+            </h2>
+            <p className="mx-auto max-w-2xl text-lg text-gray-600">
+              Chaque service est livré par des experts qualifiés de notre
+              réseau, coordonnés pour garantir qualité et cohérence.
+            </p>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {processSteps.map((step, i) => (
-                <div key={i} className="relative">
-                  <div className="flex items-center mb-4">
-                    <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm mr-4">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {serviceCategories.map((category) => (
+              <div
+                key={category.id}
+                className={`group rounded-2xl border-2 ${category.color} bg-white p-8 shadow-md transition-all duration-300 hover:shadow-2xl`}
+              >
+                <div className="mb-4 text-5xl">{category.icon}</div>
+
+                <h3 className="mb-1 text-xl font-bold text-blue-900">
+                  {category.title}
+                </h3>
+                <p className="mb-4 text-sm font-semibold text-yellow-600">
+                  {category.tagline}
+                </p>
+
+                <p className="mb-5 text-sm leading-relaxed text-gray-600">
+                  {category.description}
+                </p>
+
+                <div className={`${category.bgColor} mb-5 space-y-2 rounded-xl p-4`}>
+                  <div className="flex items-start gap-2">
+                    <span className="mt-0.5 flex-shrink-0 text-xs font-bold text-red-500">
+                      AVANT
+                    </span>
+                    <span className="text-xs text-gray-600">
+                      {category.problem}
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="mt-0.5 flex-shrink-0 text-xs font-bold text-green-600">
+                      APRÈS
+                    </span>
+                    <span className="text-xs font-semibold text-gray-700">
+                      {category.result}
+                    </span>
+                  </div>
+                </div>
+
+                <ul className="mb-6 space-y-2">
+                  {category.services.slice(0, 4).map((service) => (
+                    <li key={service} className="flex items-start gap-2">
+                      <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-500" />
+                      <span className="text-sm text-gray-700">{service}</span>
+                    </li>
+                  ))}
+                  {category.services.length > 4 && (
+                    <li className="pl-6 text-xs italic text-gray-400">
+                      + {category.services.length - 4} services supplémentaires
+                    </li>
+                  )}
+                </ul>
+
+                <a
+                  href="https://wa.me/22893392515"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-bold text-yellow-600 transition-colors hover:text-yellow-500"
+                >
+                  Demander un devis <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="h-1 bg-gradient-to-r from-blue-900 via-yellow-500 to-blue-900" />
+
+      <section className="bg-black py-20 text-white md:py-28">
+        <div className="container mx-auto px-6 md:px-12">
+          <div className="mb-14 text-center">
+            <span className="mb-4 inline-block rounded-full bg-yellow-500/20 px-4 py-1.5 text-sm font-bold text-yellow-400">
+              Notre processus
+            </span>
+            <h2 className="mb-4 text-3xl font-bold md:text-5xl">
+              Comment nous travaillons
+            </h2>
+            <p className="mx-auto max-w-2xl text-xl text-gray-300">
+              Une méthode structurée et transparente pour garantir votre succès à
+              chaque étape du projet.
+            </p>
+          </div>
+
+          <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-4">
+            {processSteps.map((step, index) => {
+              const Icon = step.icon;
+
+              return (
+                <div key={step.number} className="relative">
+                  <div className="h-full rounded-2xl border border-yellow-500/40 bg-gradient-to-br from-blue-900 to-blue-800 p-6 text-center transition-all duration-300 hover:border-yellow-500">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-yellow-500">
+                      <Icon className="h-7 w-7 text-blue-900" />
+                    </div>
+                    <div className="mb-1 text-sm font-bold text-yellow-400">
                       {step.number}
                     </div>
-                    <div className="h-[1px] flex-grow bg-border hidden lg:block" />
+                    <h3 className="mb-3 text-lg font-bold">{step.title}</h3>
+                    <p className="text-sm leading-relaxed text-gray-300">
+                      {step.description}
+                    </p>
                   </div>
-                  <div className="flex items-center space-x-2 mb-3 text-primary">
-                    {step.icon}
-                    <h3 className="font-serif font-medium text-lg">{step.title}</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
+                  {index < processSteps.length - 1 && (
+                    <div className="absolute right-[-0.75rem] top-1/2 z-10 hidden h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-yellow-500 md:flex">
+                      <ArrowRight className="h-3 w-3 text-blue-900" />
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
+              );
+            })}
+          </div>
+
+          <div className="rounded-2xl border border-yellow-500/30 bg-blue-900/50 p-6 text-center">
+            <p className="text-gray-200">
+              <Zap className="mr-2 inline h-4 w-4 text-yellow-400" />
+              Réponse garantie sous{" "}
+              <strong className="text-yellow-400">24 heures</strong> ·
+              Consultation initiale{" "}
+              <strong className="text-yellow-400">100% gratuite</strong> · Devis
+              sans engagement
+            </p>
           </div>
         </div>
+      </section>
 
-        {/* CTA SECTION */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="bg-gradient-to-br from-primary to-secondary text-primary-foreground rounded-[3rem] p-12 md:p-20 relative overflow-hidden text-center"
-        >
-          <div className="absolute top-0 left-0 w-full h-full opacity-10" />
-          <h2 className="text-4xl md:text-5xl font-serif font-medium mb-6 relative z-10">Prêt à transformer votre présence digitale ?</h2>
-          <p className="text-primary-foreground/90 max-w-2xl mx-auto mb-10 text-lg relative z-10">
-            Rejoignez les centaines de clients qui nous font confiance pour leurs projets digitaux.
+      <section className="bg-white py-20 md:py-28">
+        <div className="container mx-auto px-6 md:px-12">
+          <div className="mb-14 text-center">
+            <span className="mb-4 inline-block rounded-full bg-yellow-100 px-4 py-1.5 text-sm font-bold text-yellow-700">
+              Tarification
+            </span>
+            <h2 className="mb-4 text-3xl font-bold text-blue-900 md:text-5xl">
+              Des tarifs transparents et accessibles
+            </h2>
+            <p className="mx-auto max-w-2xl text-xl text-gray-600">
+              Adaptés à toutes les tailles de structure, sans frais cachés, avec
+              un rapport qualité/prix optimisé.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            {pricingPlans.map((plan) => (
+              <div
+                key={plan.name}
+                className={`relative rounded-2xl p-8 transition-all duration-300 ${
+                  plan.highlighted
+                    ? "scale-105 border-2 border-yellow-500 bg-gradient-to-br from-blue-900 to-blue-800 text-white shadow-2xl"
+                    : "border-2 border-gray-200 bg-white text-gray-900 hover:border-yellow-500 hover:shadow-lg"
+                }`}
+              >
+                {plan.badge && (
+                  <div className="absolute left-1/2 top-[-0.75rem] -translate-x-1/2">
+                    <span className="rounded-full bg-yellow-500 px-4 py-1 text-xs font-bold text-blue-900 shadow">
+                      {plan.badge}
+                    </span>
+                  </div>
+                )}
+
+                <h3
+                  className={`mb-2 text-2xl font-bold ${
+                    plan.highlighted ? "text-yellow-400" : "text-blue-900"
+                  }`}
+                >
+                  {plan.name}
+                </h3>
+                <p
+                  className={`mb-5 text-sm ${
+                    plan.highlighted ? "text-gray-200" : "text-gray-600"
+                  }`}
+                >
+                  {plan.description}
+                </p>
+                <div className="mb-6">
+                  <span
+                    className={`text-xs ${
+                      plan.highlighted ? "text-gray-300" : "text-gray-500"
+                    }`}
+                  >
+                    {plan.price}
+                  </span>
+                  <div className="mt-1 text-4xl font-bold">
+                    {plan.amount}
+                    {plan.currency && (
+                      <span className="ml-2 text-base font-medium">
+                        {plan.currency}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <ul className="mb-8 space-y-3">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2">
+                      <CheckCircle
+                        className={`mt-0.5 h-5 w-5 flex-shrink-0 ${
+                          plan.highlighted ? "text-yellow-400" : "text-yellow-500"
+                        }`}
+                      />
+                      <span
+                        className={`text-sm ${
+                          plan.highlighted ? "text-gray-200" : "text-gray-700"
+                        }`}
+                      >
+                        {feature}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <a
+                  href="https://wa.me/22893392515"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`block w-full rounded-lg px-4 py-3 text-center font-bold transition-all duration-200 hover:scale-105 ${
+                    plan.highlighted
+                      ? "bg-yellow-500 text-blue-900 hover:bg-yellow-400"
+                      : "bg-blue-900 text-white hover:bg-blue-800"
+                  }`}
+                >
+                  Demander un devis
+                </a>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 rounded-2xl border-2 border-blue-900 bg-blue-50 p-6 text-center">
+            <p className="font-medium text-blue-900">
+              <strong>Note :</strong> Tous nos services incluent une consultation
+              gratuite et un devis personnalisé. Les prix sont indicatifs en
+              FCFA et s'adaptent à votre contexte spécifique.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-gradient-to-br from-blue-900 to-black py-20 text-white md:py-28">
+        <div className="container mx-auto px-6 md:px-12 text-center">
+          <h2 className="mb-6 text-3xl font-bold md:text-5xl">
+            Quel est votre prochain projet ?
+          </h2>
+          <p className="mx-auto mb-10 max-w-2xl text-xl text-gray-200">
+            Peu importe votre besoin ou votre budget, nous avons une solution.
+            Contactez-nous et obtenez une réponse concrète sous 24h.
           </p>
-          <Link href="/studio/contact">
-            <Button size="lg" variant="secondary" className="h-16 px-10 text-sm uppercase tracking-widest bg-background text-foreground hover:bg-background/90 relative z-10">
-              Demander un devis <ArrowRight className="ml-3 w-4 h-4" />
-            </Button>
-          </Link>
-        </motion.div>
-      </div>
+          <div className="flex flex-col justify-center gap-4 sm:flex-row">
+            <Link
+              href="/studio/contact"
+              className="flex items-center justify-center gap-2 rounded-lg bg-yellow-500 px-8 py-4 font-bold text-blue-900 shadow-lg transition-all duration-200 hover:scale-105 hover:bg-yellow-400"
+            >
+              <Calendar className="h-5 w-5" />
+              Réserver un échange gratuit
+            </Link>
+            <a
+              href="https://wa.me/22893392515"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 rounded-lg border-2 border-yellow-500/70 px-8 py-4 font-bold text-yellow-300 transition-all duration-200 hover:border-yellow-500 hover:text-yellow-400"
+            >
+              WhatsApp : +228 93 39 25 15
+            </a>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
