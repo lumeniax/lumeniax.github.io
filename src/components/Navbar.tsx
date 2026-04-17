@@ -40,13 +40,17 @@ export function Navbar() {
           </div>
         </Link>
 
-        <nav className="hidden md:flex items-center space-x-8">
+        <nav className="hidden md:flex items-center space-x-6">
           {/* Bouton Accueil */}
           <Link href="/">
-            <div className={`flex items-center gap-2 transition-all duration-300 ${isHome ? 'text-accent drop-shadow-lg' : 'text-foreground/70 hover:text-accent hover:drop-shadow-md'}`}>
+            <button className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${
+              isHome 
+                ? 'bg-accent/20 text-accent border border-accent/50 shadow-lg shadow-accent/20' 
+                : 'text-foreground/70 hover:text-accent hover:bg-accent/10 border border-transparent hover:border-accent/30'
+            }`}>
               <Home size={18} />
               <span className="text-sm font-semibold tracking-wide">ACCUEIL</span>
-            </div>
+            </button>
           </Link>
 
           <div className="flex items-center space-x-1 group relative">
@@ -102,7 +106,11 @@ export function Navbar() {
           >
             {/* Bouton Accueil mobile */}
             <Link href="/" onClick={() => setMobileMenuOpen(false)}>
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-accent/15 to-transparent rounded-lg border border-accent/30 hover:border-accent/60 hover:shadow-lg hover:shadow-accent/20 transition-all duration-300">
+              <button className={`w-full flex items-center justify-between p-4 rounded-lg border transition-all duration-300 ${
+                isHome
+                  ? 'bg-accent/20 border-accent/50 shadow-lg shadow-accent/20'
+                  : 'bg-gradient-to-r from-accent/10 to-transparent border-accent/30 hover:border-accent/60 hover:shadow-lg hover:shadow-accent/20'
+              }`}>
                 <div>
                   <h3 className="font-serif text-lg font-semibold text-accent flex items-center gap-2">
                     <Home size={18} />
@@ -110,8 +118,8 @@ export function Navbar() {
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1">Retour à la page principale</p>
                 </div>
-                <ChevronRight size={18} className="text-accent/70 group-hover:translate-x-1 transition-transform" />
-              </div>
+                <ChevronRight size={18} className="text-accent/70" />
+              </button>
             </Link>
 
             <Link href="/studio" onClick={() => setMobileMenuOpen(false)}>
