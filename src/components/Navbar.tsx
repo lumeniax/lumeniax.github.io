@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronRight } from "lucide-react";
+import { Menu, X, ChevronRight, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
@@ -17,6 +17,7 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const isHome = location === "/";
   const isStudio = location.startsWith("/studio");
   const isAcademy = location.startsWith("/academy");
 
@@ -40,6 +41,16 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-8">
+          <div className="flex items-center space-x-1 group relative">
+            <Link href="/">
+              <span className={`text-sm font-semibold tracking-wide transition-all duration-300 flex items-center gap-1 ${isHome ? 'text-primary drop-shadow-lg drop-shadow-primary/50' : 'text-foreground/70 hover:text-primary hover:drop-shadow-md'}`}>
+                <Home size={14} />
+                ACCUEIL
+              </span>
+            </Link>
+            {isHome && <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent rounded-full" />}
+          </div>
+
           <div className="flex items-center space-x-1 group relative">
             <Link href="/studio">
               <span className={`text-sm font-semibold tracking-wide transition-all duration-300 ${isStudio ? 'text-primary drop-shadow-lg drop-shadow-primary/50' : 'text-foreground/70 hover:text-primary hover:drop-shadow-md'}`}>
@@ -91,6 +102,19 @@ export function Navbar() {
             exit={{ opacity: 0, y: -20 }}
             className="absolute top-full left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-primary/20 p-6 shadow-2xl shadow-primary/10 md:hidden flex flex-col space-y-4"
           >
+            <Link href="/" onClick={() => setMobileMenuOpen(false)}>
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-transparent rounded-lg border border-primary/20 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300">
+                <div className="flex items-center gap-3">
+                  <Home size={18} className="text-primary" />
+                  <div>
+                    <h3 className="font-serif text-lg font-semibold text-primary">Accueil</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Retour à la page principale</p>
+                  </div>
+                </div>
+                <ChevronRight size={18} className="text-primary/70 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
             <Link href="/studio" onClick={() => setMobileMenuOpen(false)}>
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/15 to-transparent rounded-lg border border-primary/30 hover:border-primary/60 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
                 <div>
