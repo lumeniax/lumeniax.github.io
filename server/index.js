@@ -1,10 +1,16 @@
 import express from "express";
 import cors from "cors";
 import pg from "pg";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const { Pool } = pg;
 const app = express();
-const PORT = 3001;
+
+const IS_PROD = process.env.NODE_ENV === "production";
+const PORT = IS_PROD ? 5000 : 3001;
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -205,8 +211,19 @@ app.post("/api/forum/comments/:id/like", async (req, res) => {
   }
 });
 
+// ─── Static files (production) ───────────────────────────────────────────────
+
+if (IS_PROD) {
+  const distPath = path.join(__dirname, "..", "dist");
+  app.use(express.static(distPath));
+  app.use((_req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+  });
+}
+
 // ─── Start ───────────────────────────────────────────────────────────────────
 
-app.listen(PORT, "127.0.0.1", () => {
-  console.log(`Forum API running on http://127.0.0.1:${PORT}`);
+const host = IS_PROD ? "0.0.0.0" : "127.0.0.1";
+app.listen(PORT, host, () => {
+  console.log(`Forum API running on http://${host}:${PORT}`);
 });
