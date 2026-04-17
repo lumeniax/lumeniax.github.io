@@ -45,7 +45,7 @@ export default function AcademyArticles() {
           className="mb-20"
         >
           <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl font-serif font-medium mb-6">
-            Articles de <span className="italic text-primary">Fond</span>
+            Articles de <span className="italic text-primary">fond</span>
           </motion.h1>
           <motion.p variants={fadeUp} className="text-lg text-muted-foreground max-w-2xl">
             Explorations intellectuelles pour comprendre le monde et soi-même.

@@ -51,12 +51,12 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link href="/academy/articles">
-                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer">Articles de Fond</span>
+                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer">Articles de fond</span>
                 </Link>
               </li>
               <li>
                 <Link href="/academy/formations">
-                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer">Formations Masterclass</span>
+                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer">Masterclasses et formations</span>
                 </Link>
               </li>
               <li>

@@ -46,7 +46,7 @@ export default function Academy() {
             <Link href="/academy/articles">
               <motion.div variants={fadeUp} className="cursor-pointer p-8 h-full border border-border/50 rounded-xl bg-background/50 hover:border-primary/50 transition-all group">
                 <BookOpen className="w-8 h-8 text-primary mb-6 group-hover:scale-110 transition-transform" />
-                <h3 className="font-serif text-xl mb-3">Articles de Fond</h3>
+                <h3 className="font-serif text-xl mb-3">Articles de fond</h3>
                 <p className="text-sm text-muted-foreground">Plus de 40 publications sur le développement personnel, l'attention et la philosophie.</p>
               </motion.div>
             </Link>

@@ -62,7 +62,7 @@ export default function Home() {
                   <div className="relative z-10">
                     <BookOpen className="w-8 h-8 text-secondary mb-4" />
                     <h3 className="font-serif text-xl font-medium mb-2">Academy</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Savoir, Formations & Média</p>
+                    <p className="text-sm text-muted-foreground mb-4">Savoirs, formations et médias</p>
                     <div className="flex items-center text-xs font-medium text-secondary uppercase tracking-wider group-hover:translate-x-2 transition-transform duration-300">
                       Explorer la plateforme <ArrowRight size={14} className="ml-2" />
                     </div>
