@@ -19,7 +19,7 @@ export function Layout({ children }: LayoutProps) {
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground dark">
       <Navbar />
       <BackButton />
-      <main className="flex-1">
+      <main className="flex-1 pb-20 md:pb-0">
         {children}
       </main>
       <Footer />
