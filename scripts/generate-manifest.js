@@ -73,7 +73,7 @@ async function generateManifest() {
   await mkdir(CONTENT_DIR, { recursive: true });
 
   const htmlFiles = files.filter(
-    (f) => f.endsWith(".html") && f !== "index.html"
+    (f) => f.endsWith(".html") && f !== "index.html" && !f.startsWith("exemple-")
   );
 
   const articles = [];
