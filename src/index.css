@@ -57,49 +57,54 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ─── LUMENIAX PREMIUM PALETTE — Light mode ─────────────────────────────── */
+/* ─── LUMENIAX PREMIUM PALETTE — Dark mode (Primary) ─────────────────────── */
 :root {
-  --button-outline: rgba(0,0,0, .10);
-  --badge-outline: rgba(0,0,0, .05);
-  --opaque-button-border-intensity: -8;
-  --elevate-1: rgba(0,0,0, .03);
-  --elevate-2: rgba(0,0,0, .08);
+  --button-outline: rgba(255,255,255, .10);
+  --badge-outline: rgba(255,255,255, .05);
+  --opaque-button-border-intensity: 9;
+  --elevate-1: rgba(255,255,255, .04);
+  --elevate-2: rgba(255,255,255, .09);
 
-  --background: 0 0% 100%;          /* #FFFFFF white */
-  --foreground: 0 0% 5%;            /* #0D0D0D near-black */
+  /* Fond et surfaces premium */
+  --background: 217 33% 7%;             /* #0B0E14 - fond ultra-sombre */
+  --foreground: 210 40% 98%;            /* #F5F7FA - texte primaire clair */
 
-  --card: 220 14% 96%;              /* #F3F4F6 very light */
-  --card-foreground: 0 0% 5%;
-  --card-border: 220 13% 91%;       /* #E5E7EB */
+  --card: 217 30% 11%;                  /* #141821 - surface 1 */
+  --card-foreground: 210 40% 98%;
+  --card-border: 217 25% 16%;           /* #1C2230 - surface 2 / border */
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 5%;
-  --popover-border: 220 13% 91%;
+  --popover: 217 30% 11%;
+  --popover-foreground: 210 40% 98%;
+  --popover-border: 217 25% 16%;
 
-  --primary: 210 100% 50%;          /* #00CCFF cyan vibrant */
-  --primary-foreground: 0 0% 100%;  /* white */
+  /* Couleurs brand premium */
+  --primary: 220 100% 50%;              /* #4F7FFF - bleu studio */
+  --primary-foreground: 210 40% 98%;
 
-  --secondary: 270 100% 50%;        /* #BB00FF purple vibrant */
-  --secondary-foreground: 0 0% 100%;
+  --secondary: 270 100% 50%;            /* #7C5CFF - violet academy */
+  --secondary-foreground: 210 40% 98%;
 
-  --muted: 220 14% 96%;             /* #F3F4F6 */
-  --muted-foreground: 0 0% 45%;     /* mid-grey */
+  /* Texte secondaire et muted */
+  --muted: 217 25% 16%;                 /* #1C2230 - surface 2 */
+  --muted-foreground: 210 12% 72%;      /* #9BA3B4 - texte secondaire */
 
-  --accent: 30 100% 50%;            /* #FF8C00 orange vibrant */
-  --accent-foreground: 0 0% 4%;     /* near-black */
+  /* Accent or premium */
+  --accent: 38 100% 72%;                /* #E8B96B - or premium */
+  --accent-foreground: 217 33% 7%;      /* #0B0E14 - texte sur or */
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 220 13% 91%;            /* #E5E7EB */
-  --input: 220 14% 96%;             /* #F3F4F6 */
-  --ring: 210 100% 50%;             /* cyan */
+  --border: 217 25% 16%;                /* #1C2230 */
+  --input: 217 30% 11%;                 /* #141821 */
+  --ring: 220 100% 50%;                 /* bleu */
 
-  --chart-1: 210 100% 50%;
-  --chart-2: 30 100% 50%;
-  --chart-3: 270 100% 50%;
-  --chart-4: 180 100% 50%;
-  --chart-5: 30 100% 60%;
+  /* Chart colors avec palette premium */
+  --chart-1: 220 100% 50%;              /* bleu */
+  --chart-2: 38 100% 72%;               /* or */
+  --chart-3: 270 100% 50%;              /* violet */
+  --chart-4: 180 100% 50%;              /* cyan */
+  --chart-5: 220 100% 60%;              /* bleu clair */
 
   --app-font-sans: 'Open Sans', sans-serif;
   --app-font-serif: 'Poppins', sans-serif;
@@ -107,49 +112,49 @@
   --radius: 0.65rem;
 }
 
-/* ─── LUMENIAX PREMIUM PALETTE — Dark mode ──────────────────────────────── */
-.dark {
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
-  --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
+/* ─── Light mode (fallback) ────────────────────────────────────────────────── */
+.light {
+  --button-outline: rgba(0,0,0, .10);
+  --badge-outline: rgba(0,0,0, .05);
+  --opaque-button-border-intensity: -8;
+  --elevate-1: rgba(0,0,0, .03);
+  --elevate-2: rgba(0,0,0, .08);
 
-  --background: 0 0% 4%;            /* #0A0A0A */
-  --foreground: 0 0% 100%;          /* #FFFFFF */
+  --background: 0 0% 100%;
+  --foreground: 217 33% 7%;
 
-  --card: 0 0% 10%;                 /* #1A1A1A */
-  --card-foreground: 0 0% 100%;
-  --card-border: 0 0% 20%;          /* #333333 */
+  --card: 220 14% 96%;
+  --card-foreground: 217 33% 7%;
+  --card-border: 220 13% 91%;
 
-  --popover: 0 0% 10%;
-  --popover-foreground: 0 0% 100%;
-  --popover-border: 0 0% 20%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 217 33% 7%;
+  --popover-border: 220 13% 91%;
 
-  --primary: 210 100% 50%;          /* #00CCFF cyan vibrant */
+  --primary: 220 100% 50%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 270 100% 50%;        /* #BB00FF purple vibrant */
+  --secondary: 270 100% 50%;
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 0 0% 20%;                /* #333333 */
-  --muted-foreground: 0 0% 80%;     /* #CCCCCC */
+  --muted: 220 14% 96%;
+  --muted-foreground: 210 12% 28%;
 
-  --accent: 30 100% 50%;            /* #FF8C00 orange vibrant */
-  --accent-foreground: 0 0% 4%;
+  --accent: 38 100% 72%;
+  --accent-foreground: 217 33% 7%;
 
-  --destructive: 0 62% 30%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 0 0% 20%;               /* #333333 */
-  --input: 0 0% 13%;                /* #222222 */
-  --ring: 210 100% 50%;             /* cyan */
+  --border: 220 13% 91%;
+  --input: 220 14% 96%;
+  --ring: 220 100% 50%;
 
-  --chart-1: 210 100% 50%;
-  --chart-2: 30 100% 50%;
+  --chart-1: 220 100% 50%;
+  --chart-2: 38 100% 72%;
   --chart-3: 270 100% 50%;
   --chart-4: 180 100% 50%;
-  --chart-5: 210 100% 60%;
+  --chart-5: 220 100% 60%;
 }
 
 @layer base {
@@ -166,6 +171,42 @@
   }
 }
 
+/* ─── Premium CTA Buttons ──────────────────────────────────────────────────── */
+.btn-cta-primary {
+  @apply relative inline-flex items-center justify-center px-8 py-3 font-medium text-white rounded-lg overflow-hidden transition-all duration-300;
+  background: linear-gradient(135deg, #4F7FFF 0%, #7C5CFF 100%);
+  box-shadow: 0 4px 15px rgba(79, 127, 255, 0.3);
+}
+
+.btn-cta-primary:hover {
+  box-shadow: 0 8px 25px rgba(79, 127, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+/* ─── Premium Accent (Gold) ────────────────────────────────────────────────── */
+.accent-highlight {
+  @apply text-accent font-medium;
+}
+
+.accent-badge {
+  @apply inline-block px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/30;
+}
+
+.accent-glow {
+  box-shadow: 0 0 20px rgba(232, 185, 107, 0.3);
+}
+
+/* ─── Card Premium Styling ────────────────────────────────────────────────── */
+.card-premium {
+  @apply relative p-6 rounded-xl bg-card border border-card-border transition-all duration-300;
+}
+
+.card-premium:hover {
+  @apply border-primary/50 shadow-lg;
+  box-shadow: 0 8px 32px rgba(79, 127, 255, 0.15);
+}
+
+/* ─── Article Content Styling ─────────────────────────────────────────────── */
 .article-html-content {
   color: hsl(var(--foreground));
 }
@@ -179,7 +220,7 @@
   line-height: 1.75;
   margin-bottom: 2rem;
   font-style: italic;
-  border-left: 2px solid hsl(var(--primary));
+  border-left: 3px solid hsl(var(--primary));
   padding-left: 1rem;
   color: hsl(var(--muted-foreground));
 }
@@ -289,4 +330,42 @@
   color: hsl(var(--primary));
   text-decoration: underline;
   text-underline-offset: 2px;
+  transition: color 0.2s ease;
+}
+
+.article-html-content a:hover {
+  color: hsl(var(--accent));
+}
+
+/* ─── Gradient Hero Background ────────────────────────────────────────────── */
+.hero-gradient {
+  background: linear-gradient(135deg, #4F7FFF 0%, #E8B96B 50%, #7C5CFF 100%);
+}
+
+.hero-gradient-text {
+  background: linear-gradient(135deg, #4F7FFF 0%, #E8B96B 50%, #7C5CFF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Micro-interactions ───────────────────────────────────────────────────── */
+.transition-smooth {
+  @apply transition-all duration-300 ease-out;
+}
+
+.hover-lift {
+  @apply hover:shadow-lg hover:-translate-y-1 transition-all duration-300;
+}
+
+.glow-primary {
+  box-shadow: 0 0 20px rgba(79, 127, 255, 0.2);
+}
+
+.glow-secondary {
+  box-shadow: 0 0 20px rgba(124, 92, 255, 0.2);
+}
+
+.glow-accent {
+  box-shadow: 0 0 20px rgba(232, 185, 107, 0.2);
 }
