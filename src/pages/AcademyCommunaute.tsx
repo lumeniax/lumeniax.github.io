@@ -1,66 +1,223 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 import { fadeUp, staggerContainer } from "@/lib/animations";
-import { MessageSquare, Users, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, MessageSquare, Network, PlusCircle, LogIn, Hash, UserCircle2, Loader2 } from "lucide-react";
+import {
+  fetchSpaces, createSpace, toggleMember,
+  getForumUser, setForumUser,
+  relTime, initials,
+  type ForumSpace, type ForumUser,
+} from "@/hooks/useForum";
+
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  echange: <MessageSquare size={13} />,
+  club: <Hash size={13} />,
+  reseau: <Network size={13} />,
+};
+const CATEGORY_LABELS: Record<string, string> = {
+  echange: "Échange", club: "Club", reseau: "Réseau",
+};
+const EMOJIS = ["💬", "📚", "🤝", "🧠", "⚡", "🎯", "🌍", "🚀", "💡", "🎓"];
 
 export default function AcademyCommunaute() {
+  const [spaces, setSpaces] = useState<ForumSpace[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<ForumUser | null>(null);
+  const [filter, setFilter] = useState<"all" | "echange" | "club" | "reseau">("all");
+
+  const [showUserDialog, setShowUserDialog] = useState(false);
+  const [showSpaceDialog, setShowSpaceDialog] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newEmoji, setNewEmoji] = useState("💬");
+  const [newCategory, setNewCategory] = useState<"echange" | "club" | "reseau">("echange");
+  const [nameInput, setNameInput] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setUser(getForumUser());
+    fetchSpaces().then(setSpaces).finally(() => setLoading(false));
+  }, []);
+
+  function requireUser(action: () => void) {
+    const u = getForumUser();
+    if (u) { action(); }
+    else { setPendingAction(() => action); setShowUserDialog(true); }
+  }
+
+  function handleSetUser() {
+    if (!nameInput.trim()) return;
+    const u = setForumUser(nameInput);
+    setUser(u);
+    setShowUserDialog(false);
+    setNameInput("");
+    if (pendingAction) { pendingAction(); setPendingAction(null); }
+  }
+
+  async function handleJoin(spaceId: string) {
+    requireUser(async () => {
+      const u = getForumUser();
+      if (!u) return;
+      await toggleMember(spaceId, u.id);
+      const updated = await fetchSpaces();
+      setSpaces(updated);
+    });
+  }
+
+  async function submitSpace() {
+    const u = getForumUser();
+    if (!newName.trim() || !u) return;
+    setSaving(true);
+    try {
+      await createSpace({ name: newName.trim(), description: newDesc.trim(), emoji: newEmoji, category: newCategory }, u);
+      const updated = await fetchSpaces();
+      setSpaces(updated);
+      setNewName(""); setNewDesc(""); setNewEmoji("💬"); setNewCategory("echange");
+      setShowSpaceDialog(false);
+    } finally { setSaving(false); }
+  }
+
+  const filtered = filter === "all" ? spaces : spaces.filter((s) => s.category === filter);
+
   return (
-    <div className="w-full pt-32 pb-20">
-      <div className="container mx-auto px-6 md:px-12">
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-          className="max-w-4xl mx-auto text-center mb-24"
-        >
-          <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl font-serif font-medium mb-6">
+    <div className="w-full pt-32 pb-24">
+      <div className="container mx-auto px-6 md:px-12 max-w-6xl">
+
+        <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="max-w-3xl mx-auto text-center mb-14">
+          <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl font-serif font-medium mb-4">
             La <span className="italic text-primary">Communauté</span>
           </motion.h1>
           <motion.p variants={fadeUp} className="text-lg text-muted-foreground mb-8">
-            Rejoignez un cercle restreint d'esprits exigeants. Échangez, apprenez et grandissez ensemble.
+            Rejoignez des espaces d'échanges, clubs et réseaux. Participez, répondez, créez.
           </motion.p>
-          <motion.div variants={fadeUp}>
-            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Rejoindre le cercle
+
+          <motion.div variants={fadeUp} className="flex items-center justify-center gap-3 flex-wrap">
+            {user ? (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-sm font-medium text-primary">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                  {initials(user.name)}
+                </span>
+                {user.name}
+              </div>
+            ) : (
+              <button onClick={() => setShowUserDialog(true)} className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/60 border border-border/60 hover:border-primary/40 text-sm text-muted-foreground hover:text-primary transition-all duration-200">
+                <UserCircle2 size={16} />
+                Définir mon pseudo
+              </button>
+            )}
+            <Button size="sm" onClick={() => requireUser(() => setShowSpaceDialog(true))} className="gap-2">
+              <PlusCircle size={15} />
+              Créer un espace
             </Button>
           </motion.div>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="p-8 border border-border/50 rounded-2xl bg-card text-center"
-          >
-            <MessageSquare className="w-10 h-10 text-primary mx-auto mb-6" />
-            <h3 className="text-xl font-serif mb-4">Échanges Privés</h3>
-            <p className="text-sm text-muted-foreground">Discussions de haut niveau sur la productivité, le stress et l'apprentissage.</p>
-          </motion.div>
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="p-8 border border-border/50 rounded-2xl bg-card text-center"
-          >
-            <BookOpen className="w-10 h-10 text-primary mx-auto mb-6" />
-            <h3 className="text-xl font-serif mb-4">Club de Lecture</h3>
-            <p className="text-sm text-muted-foreground">Analyses et retours d'expérience sur des ouvrages fondamentaux.</p>
-          </motion.div>
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="p-8 border border-border/50 rounded-2xl bg-card text-center"
-          >
-            <Users className="w-10 h-10 text-primary mx-auto mb-6" />
-            <h3 className="text-xl font-serif mb-4">Réseautage</h3>
-            <p className="text-sm text-muted-foreground">Mettez-vous en relation avec des professionnels et entrepreneurs de toute la francophonie.</p>
-          </motion.div>
+        <div className="flex justify-center mb-10">
+          <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+            <TabsList className="bg-background/60 border border-border/50">
+              <TabsTrigger value="all">Tous</TabsTrigger>
+              <TabsTrigger value="echange">Échanges</TabsTrigger>
+              <TabsTrigger value="club">Clubs</TabsTrigger>
+              <TabsTrigger value="reseau">Réseaux</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
+
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="animate-spin text-primary" size={32} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((space, i) => {
+              const isMember = user ? space.members.includes(user.id) : false;
+              return (
+                <motion.div
+                  key={space.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="group relative flex flex-col p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300"
+                >
+                  <span className="absolute top-4 right-4 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground border border-border/50 rounded-full px-2 py-0.5 bg-background/60">
+                    {CATEGORY_ICONS[space.category]}
+                    {CATEGORY_LABELS[space.category]}
+                  </span>
+                  <div className="text-4xl mb-3 select-none">{space.emoji}</div>
+                  <h3 className="font-serif text-lg font-semibold mb-2 pr-16 leading-snug">{space.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-4 flex-1 leading-relaxed">{space.description}</p>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
+                    <span className="flex items-center gap-1"><Users size={12} /> {space.member_count} membre{space.member_count !== 1 ? "s" : ""}</span>
+                    <span className="flex items-center gap-1"><MessageSquare size={12} /> {space.post_count} post{space.post_count !== 1 ? "s" : ""}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Link href={`/academy/communaute/${space.id}`} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full text-xs">Voir les posts</Button>
+                    </Link>
+                    <Button size="sm" variant={isMember ? "secondary" : "default"} className="flex-none text-xs gap-1" onClick={() => handleJoin(space.id)}>
+                      <LogIn size={12} />
+                      {isMember ? "Rejoint" : "Rejoindre"}
+                    </Button>
+                  </div>
+                </motion.div>
+              );
+            })}
+            {filtered.length === 0 && (
+              <p className="col-span-3 text-center text-muted-foreground mt-16">Aucun espace dans cette catégorie.</p>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Dialog: pseudo */}
+      <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle className="font-serif">Qui êtes-vous ?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Choisissez un pseudo visible par la communauté.</p>
+          <Input placeholder="Votre pseudo (ex : Amara K.)" value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSetUser()} autoFocus />
+          <Button onClick={handleSetUser} disabled={!nameInput.trim()} className="w-full">Confirmer</Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: créer espace */}
+      <Dialog open={showSpaceDialog} onOpenChange={setShowSpaceDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="font-serif">Créer un espace</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Icône</p>
+              <div className="flex flex-wrap gap-2">
+                {EMOJIS.map((e) => (
+                  <button key={e} onClick={() => setNewEmoji(e)} className={`text-xl p-1.5 rounded-lg border transition-all ${newEmoji === e ? "border-primary bg-primary/10" : "border-border/40 hover:border-border"}`}>{e}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Type</p>
+              <div className="flex gap-2">
+                {(["echange", "club", "reseau"] as const).map((cat) => (
+                  <button key={cat} onClick={() => setNewCategory(cat)} className={`flex-1 text-xs font-semibold py-2 rounded-lg border transition-all ${newCategory === cat ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground hover:border-border"}`}>
+                    {CATEGORY_LABELS[cat]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Input placeholder="Nom de l'espace" value={newName} onChange={(e) => setNewName(e.target.value)} maxLength={50} />
+            <Textarea placeholder="Description (optionnel)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={2} maxLength={150} />
+            <Button onClick={submitSpace} disabled={!newName.trim() || saving} className="w-full">
+              {saving ? <Loader2 className="animate-spin" size={16} /> : "Créer l'espace"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
