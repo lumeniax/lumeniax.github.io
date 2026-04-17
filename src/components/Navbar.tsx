@@ -30,8 +30,12 @@ export function Navbar() {
     >
       <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
         <Link href="/">
-          <div className="text-2xl font-serif font-bold tracking-tight cursor-pointer hover:text-primary transition-all duration-300 hover:drop-shadow-lg">
-            LUMENIAX
+          <div className="cursor-pointer hover:opacity-90 transition-opacity duration-300">
+            <img 
+              src="/images/logo.png" 
+              alt="Lumeniax Logo" 
+              className="h-12 w-auto"
+            />
           </div>
         </Link>
 

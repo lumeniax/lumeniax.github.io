@@ -14,8 +14,12 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="md:col-span-1">
             <Link href="/">
-              <div className="text-2xl font-serif font-bold tracking-tight mb-4 cursor-pointer hover:text-primary transition-colors duration-300">
-                LUMENIAX
+              <div className="cursor-pointer hover:opacity-90 transition-opacity duration-300 mb-4">
+                <img 
+                  src="/images/logo.png" 
+                  alt="Lumeniax Logo" 
+                  className="h-16 w-auto"
+                />
               </div>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
