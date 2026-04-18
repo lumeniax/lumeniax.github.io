@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Link, useParams } from "wouter";
 import { fadeUp } from "@/lib/animations";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Heart, MessageSquare, ArrowLeft, UserCircle2, Loader2 } from "lucide-react";
+import { Heart, MessageSquare, ArrowLeft, UserCircle2, Loader2, RefreshCw } from "lucide-react";
 import {
   fetchPost, fetchSpaces, fetchComments, createComment,
   togglePostLike, toggleCommentLike,
@@ -14,6 +14,8 @@ import {
   relTime, initials,
   type ForumPost, type ForumComment, type ForumUser,
 } from "@/hooks/useForum";
+
+const POLL_MS = 20_000;
 
 export default function ForumPost() {
   const params = useParams<{ spaceId: string; postId: string }>();
@@ -24,6 +26,7 @@ export default function ForumPost() {
   const [comments, setComments] = useState<ForumComment[]>([]);
   const [spaceName, setSpaceName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [user, setUser] = useState<ForumUser | null>(null);
 
   const [commentBody, setCommentBody] = useState("");
@@ -31,17 +34,35 @@ export default function ForumPost() {
   const [nameInput, setNameInput] = useState("");
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [saving, setSaving] = useState(false);
+  const [likingPostId, setLikingPostId] = useState(false);
+  const [likingCmtId, setLikingCmtId] = useState<string | null>(null);
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  async function loadData(silent = false) {
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
+    try {
+      const [postData, cmts, spaces] = await Promise.all([
+        fetchPost(postId),
+        fetchComments(postId),
+        fetchSpaces(),
+      ]);
+      setPost(postData);
+      setComments(cmts);
+      const s = spaces.find((x) => x.id === spaceId);
+      if (s) setSpaceName(s.name);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
 
   useEffect(() => {
     setUser(getForumUser());
-    Promise.all([
-      fetchPost(postId).then(setPost),
-      fetchComments(postId).then(setComments),
-      fetchSpaces().then((spaces) => {
-        const s = spaces.find((x) => x.id === spaceId);
-        if (s) setSpaceName(s.name);
-      }),
-    ]).finally(() => setLoading(false));
+    loadData();
+    intervalRef.current = setInterval(() => loadData(true), POLL_MS);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [postId, spaceId]);
 
   function requireUser(action: () => void) {
@@ -62,18 +83,50 @@ export default function ForumPost() {
   async function handlePostLike() {
     requireUser(async () => {
       const u = getForumUser();
-      if (!u) return;
-      await togglePostLike(postId, u.id);
-      setPost(await fetchPost(postId));
+      if (!u || likingPostId) return;
+      setLikingPostId(true);
+      try {
+        const { liked } = await togglePostLike(postId, u.id);
+        setPost((prev) =>
+          prev
+            ? {
+                ...prev,
+                liked,
+                like_count: liked ? prev.like_count + 1 : prev.like_count - 1,
+                likes: liked
+                  ? [...prev.likes, u.id]
+                  : prev.likes.filter((id) => id !== u.id),
+              }
+            : prev
+        );
+      } finally {
+        setLikingPostId(false);
+      }
     });
   }
 
   async function handleCommentLike(commentId: string) {
     requireUser(async () => {
       const u = getForumUser();
-      if (!u) return;
-      await toggleCommentLike(commentId, u.id);
-      setComments(await fetchComments(postId));
+      if (!u || likingCmtId) return;
+      setLikingCmtId(commentId);
+      try {
+        const { liked } = await toggleCommentLike(commentId, u.id);
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id !== commentId ? c : {
+              ...c,
+              liked,
+              like_count: liked ? c.like_count + 1 : c.like_count - 1,
+              likes: liked
+                ? [...c.likes, u.id]
+                : c.likes.filter((id) => id !== u.id),
+            }
+          )
+        );
+      } finally {
+        setLikingCmtId(null);
+      }
     });
   }
 
@@ -82,8 +135,9 @@ export default function ForumPost() {
     if (!commentBody.trim() || !u) return;
     setSaving(true);
     try {
-      await createComment({ postId, body: commentBody.trim() }, u);
-      setComments(await fetchComments(postId));
+      const newCmt = await createComment({ postId, body: commentBody.trim() }, u);
+      setComments((prev) => [...prev, newCmt]);
+      setPost((prev) => prev ? { ...prev, comment_count: prev.comment_count + 1 } : prev);
       setCommentBody("");
     } finally { setSaving(false); }
   }
@@ -132,20 +186,34 @@ export default function ForumPost() {
           <h1 className="text-2xl md:text-3xl font-serif font-medium mb-4 leading-snug">{post.title}</h1>
           <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap mb-6">{post.body}</p>
           <div className="flex items-center gap-6 pt-4 border-t border-border/40">
-            <button onClick={handlePostLike} className={`flex items-center gap-2 text-sm font-medium transition-all ${postLiked ? "text-red-400" : "text-muted-foreground hover:text-red-400"}`}>
+            <button
+              onClick={handlePostLike}
+              disabled={likingPostId}
+              className={`flex items-center gap-2 text-sm font-medium transition-all disabled:opacity-60 ${postLiked ? "text-red-400" : "text-muted-foreground hover:text-red-400"}`}
+            >
               <Heart size={16} fill={postLiked ? "currentColor" : "none"} />
               {post.like_count} j'aime
             </button>
             <span className="flex items-center gap-2 text-sm text-muted-foreground">
               <MessageSquare size={16} />{comments.length} commentaire{comments.length !== 1 ? "s" : ""}
             </span>
+            <button
+              onClick={() => loadData(true)}
+              disabled={refreshing}
+              title="Rafraîchir"
+              className="ml-auto p-1.5 rounded-lg border border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40 transition-all disabled:opacity-40"
+            >
+              <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
+            </button>
           </div>
         </motion.div>
 
         {/* Comment form */}
-        <h2 className="text-lg font-serif font-semibold mb-5">
-          {comments.length > 0 ? `${comments.length} commentaire${comments.length !== 1 ? "s" : ""}` : "Aucun commentaire encore"}
-        </h2>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-serif font-semibold">
+            {comments.length > 0 ? `${comments.length} commentaire${comments.length !== 1 ? "s" : ""}` : "Aucun commentaire encore"}
+          </h2>
+        </div>
         <div className="mb-8 p-5 rounded-2xl border border-border/50 bg-card/60">
           {user ? (
             <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
@@ -189,7 +257,11 @@ export default function ForumPost() {
                   </div>
                 </div>
                 <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap mb-3">{cmt.body}</p>
-                <button onClick={() => handleCommentLike(cmt.id)} className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${cLiked ? "text-red-400" : "text-muted-foreground hover:text-red-400"}`}>
+                <button
+                  onClick={() => handleCommentLike(cmt.id)}
+                  disabled={likingCmtId === cmt.id}
+                  className={`flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${cLiked ? "text-red-400" : "text-muted-foreground hover:text-red-400"}`}
+                >
                   <Heart size={12} fill={cLiked ? "currentColor" : "none"} />
                   {cmt.like_count}
                 </button>

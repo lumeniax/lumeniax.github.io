@@ -18,6 +18,8 @@ import AcademyFormations from "@/pages/AcademyFormations";
 import FormationDetail from "@/pages/FormationDetail";
 import AcademyVideos from "@/pages/AcademyVideos";
 import AcademyCommunaute from "@/pages/AcademyCommunaute";
+import ForumSpace from "@/pages/ForumSpace";
+import ForumPost from "@/pages/ForumPost";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import MentionsLegales from "@/pages/MentionsLegales";
@@ -30,30 +32,34 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Home} />
-        
-        {/* Studio Routes */}
+
+        {/* Studio */}
         <Route path="/studio" component={Studio} />
         <Route path="/studio/services" component={StudioServices} />
         <Route path="/studio/portfolio" component={StudioPortfolio} />
         <Route path="/studio/process" component={StudioProcess} />
         <Route path="/studio/contact" component={StudioContact} />
-        
-        {/* Academy Routes */}
+
+        {/* Academy */}
         <Route path="/academy" component={Academy} />
         <Route path="/academy/articles" component={AcademyArticles} />
         <Route path="/academy/articles/:slug" component={ArticleDetail} />
         <Route path="/academy/formations" component={AcademyFormations} />
         <Route path="/academy/formations/:slug" component={FormationDetail} />
         <Route path="/academy/videos" component={AcademyVideos} />
+
+        {/* Community Forum */}
         <Route path="/academy/communaute" component={AcademyCommunaute} />
-        
+        <Route path="/academy/communaute/:spaceId" component={ForumSpace} />
+        <Route path="/academy/communaute/:spaceId/:postId" component={ForumPost} />
+
         <Route path="/about" component={About} />
         <Route path="/contact" component={Contact} />
 
-        {/* Legal Pages */}
+        {/* Legal */}
         <Route path="/mentions-legales" component={MentionsLegales} />
         <Route path="/politique-confidentialite" component={PolitiqueConfidentialite} />
-        
+
         <Route component={NotFound} />
       </Switch>
     </Layout>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Link, useParams } from "wouter";
 import { fadeUp } from "@/lib/animations";
@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Heart, MessageSquare, PlusCircle, Users, ArrowRight, UserCircle2, Loader2 } from "lucide-react";
+import { Heart, MessageSquare, PlusCircle, Users, ArrowRight, UserCircle2, Loader2, RefreshCw } from "lucide-react";
 import {
   fetchPosts, fetchSpaces, createPost, togglePostLike, toggleMember,
   getForumUser, setForumUser,
   relTime, initials,
   type ForumPost, type ForumSpace, type ForumUser,
 } from "@/hooks/useForum";
+
+const POLL_MS = 20_000;
 
 export default function ForumSpace() {
   const params = useParams<{ spaceId: string }>();
@@ -21,6 +23,7 @@ export default function ForumSpace() {
   const [space, setSpace] = useState<ForumSpace | null>(null);
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [user, setUser] = useState<ForumUser | null>(null);
 
   const [showUserDialog, setShowUserDialog] = useState(false);
@@ -30,13 +33,31 @@ export default function ForumSpace() {
   const [postBody, setPostBody] = useState("");
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [saving, setSaving] = useState(false);
+  const [likingId, setLikingId] = useState<string | null>(null);
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  async function loadData(silent = false) {
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
+    try {
+      const [spaces, postsData] = await Promise.all([
+        fetchSpaces(),
+        fetchPosts(spaceId),
+      ]);
+      setSpace(spaces.find((s) => s.id === spaceId) || null);
+      setPosts(postsData);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
 
   useEffect(() => {
     setUser(getForumUser());
-    Promise.all([
-      fetchSpaces().then((spaces) => setSpace(spaces.find((s) => s.id === spaceId) || null)),
-      fetchPosts(spaceId).then(setPosts),
-    ]).finally(() => setLoading(false));
+    loadData();
+    intervalRef.current = setInterval(() => loadData(true), POLL_MS);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [spaceId]);
 
   function requireUser(action: () => void) {
@@ -57,9 +78,25 @@ export default function ForumSpace() {
   async function handleLike(postId: string) {
     requireUser(async () => {
       const u = getForumUser();
-      if (!u) return;
-      await togglePostLike(postId, u.id);
-      setPosts(await fetchPosts(spaceId));
+      if (!u || likingId) return;
+      setLikingId(postId);
+      try {
+        const { liked } = await togglePostLike(postId, u.id);
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id !== postId ? p : {
+              ...p,
+              liked,
+              like_count: liked ? p.like_count + 1 : p.like_count - 1,
+              likes: liked
+                ? [...p.likes, u.id]
+                : p.likes.filter((id) => id !== u.id),
+            }
+          )
+        );
+      } finally {
+        setLikingId(null);
+      }
     });
   }
 
@@ -68,8 +105,7 @@ export default function ForumSpace() {
       const u = getForumUser();
       if (!u) return;
       await toggleMember(spaceId, u.id);
-      const spaces = await fetchSpaces();
-      setSpace(spaces.find((s) => s.id === spaceId) || null);
+      loadData(true);
     });
   }
 
@@ -79,9 +115,9 @@ export default function ForumSpace() {
     setSaving(true);
     try {
       await createPost({ spaceId, title: postTitle.trim(), body: postBody.trim() }, u);
-      setPosts(await fetchPosts(spaceId));
       setPostTitle(""); setPostBody("");
       setShowPostDialog(false);
+      await loadData(true);
     } finally { setSaving(false); }
   }
 
@@ -141,9 +177,19 @@ export default function ForumSpace() {
               <UserCircle2 size={16} />Définir mon pseudo pour participer
             </button>
           )}
-          <Button onClick={() => requireUser(() => setShowPostDialog(true))} className="gap-2">
-            <PlusCircle size={15} />Nouveau post
-          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => loadData(true)}
+              disabled={refreshing}
+              title="Rafraîchir"
+              className="p-2 rounded-lg border border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40 transition-all disabled:opacity-40"
+            >
+              <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+            </button>
+            <Button onClick={() => requireUser(() => setShowPostDialog(true))} className="gap-2">
+              <PlusCircle size={15} />Nouveau post
+            </Button>
+          </div>
         </div>
 
         {/* Posts */}
@@ -170,7 +216,11 @@ export default function ForumSpace() {
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{post.body}</p>
                     <div className="flex items-center gap-4 flex-wrap">
                       <span className="text-xs text-muted-foreground">{post.author_name} · {relTime(post.created_at)}</span>
-                      <button onClick={() => handleLike(post.id)} className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${liked ? "text-red-400" : "text-muted-foreground hover:text-red-400"}`}>
+                      <button
+                        onClick={() => handleLike(post.id)}
+                        disabled={likingId === post.id}
+                        className={`flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${liked ? "text-red-400" : "text-muted-foreground hover:text-red-400"}`}
+                      >
                         <Heart size={13} fill={liked ? "currentColor" : "none"} />
                         {post.like_count}
                       </button>
