@@ -7,8 +7,6 @@
     "manifest": "node scripts/generate-manifest.js",
     "predev": "node scripts/generate-manifest.js",
     "dev": "vite",
-    "server": "node server/index.js",
-    "dev:all": "node server/index.js & sleep 2 && npm run dev",
     "prebuild": "node scripts/generate-manifest.js",
     "build": "vite build",
     "postbuild": "cp dist/index.html dist/404.html",
@@ -80,8 +78,6 @@
   },
   "dependencies": {
     "@emotion/is-prop-valid": "^1.4.0",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "pg": "^8.20.0"
+    "@supabase/supabase-js": "^2.103.3"
   }
 }

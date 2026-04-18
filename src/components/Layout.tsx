@@ -1,7 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
-import { BackButton } from "./BackButton";
 import { useLocation } from "wouter";
 
 interface LayoutProps {
@@ -18,8 +17,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground dark">
       <Navbar />
-      <BackButton />
-      <main className="flex-1 pb-20 md:pb-0">
+      <main className="flex-1">
         {children}
       </main>
       <Footer />
