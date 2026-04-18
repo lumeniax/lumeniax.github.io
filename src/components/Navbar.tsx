@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ChevronRight, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SearchBar } from "./SearchBar";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -77,22 +78,28 @@ export function Navbar() {
             </span>
           </Link>
           
-          <Link href="/contact">
-            <Button variant="premium" size="default" className="text-white">
-              CONTACT
-            </Button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <SearchBar />
+            <Link href="/contact">
+              <Button variant="premium" size="default" className="text-white">
+                CONTACT
+              </Button>
+            </Link>
+          </div>
         </nav>
 
-        <button
-          className="md:hidden text-foreground hover:text-primary transition-colors duration-300"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
-          aria-expanded={mobileMenuOpen}
-          aria-controls="mobile-menu"
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="flex items-center gap-4 md:hidden">
+          <SearchBar />
+          <button
+            className="text-foreground hover:text-primary transition-colors duration-300"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
