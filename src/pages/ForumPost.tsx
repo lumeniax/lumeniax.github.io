@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Link, useParams } from "wouter";
 import { fadeUp } from "@/lib/animations";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Heart, MessageSquare, ArrowLeft, UserCircle2, Loader2, RefreshCw } from "lucide-react";
+import { Heart, MessageSquare, ArrowLeft, UserCircle2, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import {
   fetchPost, fetchSpaces, fetchComments, createComment,
   togglePostLike, toggleCommentLike,
@@ -15,7 +15,7 @@ import {
   type ForumPost, type ForumComment, type ForumUser,
 } from "@/hooks/useForum";
 
-const POLL_MS = 20_000;
+const POLL_MS = 8_000;
 
 export default function ForumPost() {
   const params = useParams<{ spaceId: string; postId: string }>();
@@ -27,21 +27,23 @@ export default function ForumPost() {
   const [spaceName, setSpaceName] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [user, setUser] = useState<ForumUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<ForumUser | null>(getForumUser());
 
   const [commentBody, setCommentBody] = useState("");
   const [showUserDialog, setShowUserDialog] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [saving, setSaving] = useState(false);
-  const [likingPostId, setLikingPostId] = useState(false);
+  const [likingPost, setLikingPost] = useState(false);
   const [likingCmtId, setLikingCmtId] = useState<string | null>(null);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  async function loadData(silent = false) {
+  const loadData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
+    setError(null);
     try {
       const [postData, cmts, spaces] = await Promise.all([
         fetchPost(postId),
@@ -50,20 +52,21 @@ export default function ForumPost() {
       ]);
       setPost(postData);
       setComments(cmts);
-      const s = spaces.find((x) => x.id === spaceId);
+      const s = spaces.find(x => x.id === spaceId);
       if (s) setSpaceName(s.name);
+    } catch {
+      if (!silent) setError("Impossible de charger le post.");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }
+  }, [postId, spaceId]);
 
   useEffect(() => {
-    setUser(getForumUser());
     loadData();
     intervalRef.current = setInterval(() => loadData(true), POLL_MS);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [postId, spaceId]);
+  }, [loadData]);
 
   function requireUser(action: () => void) {
     const u = getForumUser();
@@ -83,24 +86,23 @@ export default function ForumPost() {
   async function handlePostLike() {
     requireUser(async () => {
       const u = getForumUser();
-      if (!u || likingPostId) return;
-      setLikingPostId(true);
+      if (!u || likingPost || !post) return;
+      setLikingPost(true);
+
+      const alreadyLiked = post.likes.includes(u.id);
+      const nowLiked = !alreadyLiked;
+      setPost(prev => prev ? {
+        ...prev,
+        like_count: nowLiked ? prev.like_count + 1 : prev.like_count - 1,
+        likes: nowLiked ? [...prev.likes, u.id] : prev.likes.filter(id => id !== u.id),
+      } : prev);
+
       try {
-        const { liked } = await togglePostLike(postId, u.id);
-        setPost((prev) =>
-          prev
-            ? {
-                ...prev,
-                liked,
-                like_count: liked ? prev.like_count + 1 : prev.like_count - 1,
-                likes: liked
-                  ? [...prev.likes, u.id]
-                  : prev.likes.filter((id) => id !== u.id),
-              }
-            : prev
-        );
+        await togglePostLike(postId, u.id);
+      } catch {
+        loadData(true);
       } finally {
-        setLikingPostId(false);
+        setLikingPost(false);
       }
     });
   }
@@ -108,22 +110,25 @@ export default function ForumPost() {
   async function handleCommentLike(commentId: string) {
     requireUser(async () => {
       const u = getForumUser();
-      if (!u || likingCmtId) return;
+      if (!u || likingCmtId === commentId) return;
       setLikingCmtId(commentId);
+
+      const cmt = comments.find(c => c.id === commentId);
+      const alreadyLiked = cmt?.likes.includes(u.id) ?? false;
+      const nowLiked = !alreadyLiked;
+      setComments(prev => prev.map(c => {
+        if (c.id !== commentId) return c;
+        return {
+          ...c,
+          like_count: nowLiked ? c.like_count + 1 : c.like_count - 1,
+          likes: nowLiked ? [...c.likes, u.id] : c.likes.filter(id => id !== u.id),
+        };
+      }));
+
       try {
-        const { liked } = await toggleCommentLike(commentId, u.id);
-        setComments((prev) =>
-          prev.map((c) =>
-            c.id !== commentId ? c : {
-              ...c,
-              liked,
-              like_count: liked ? c.like_count + 1 : c.like_count - 1,
-              likes: liked
-                ? [...c.likes, u.id]
-                : c.likes.filter((id) => id !== u.id),
-            }
-          )
-        );
+        await toggleCommentLike(commentId, u.id);
+      } catch {
+        loadData(true);
       } finally {
         setLikingCmtId(null);
       }
@@ -136,10 +141,14 @@ export default function ForumPost() {
     setSaving(true);
     try {
       const newCmt = await createComment({ postId, body: commentBody.trim() }, u);
-      setComments((prev) => [...prev, newCmt]);
-      setPost((prev) => prev ? { ...prev, comment_count: prev.comment_count + 1 } : prev);
+      setComments(prev => [...prev, newCmt]);
+      setPost(prev => prev ? { ...prev, comment_count: prev.comment_count + 1 } : prev);
       setCommentBody("");
-    } finally { setSaving(false); }
+    } catch {
+      alert("Erreur lors de l'envoi du commentaire. Veuillez réessayer.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) {
@@ -150,10 +159,10 @@ export default function ForumPost() {
     );
   }
 
-  if (!post) {
+  if (error || !post) {
     return (
       <div className="w-full pt-40 pb-20 text-center">
-        <p className="text-muted-foreground">Post introuvable.</p>
+        <p className="text-muted-foreground">{error || "Post introuvable."}</p>
         <Link href={`/academy/communaute/${spaceId}`}><Button variant="outline" className="mt-6">← Retour à l'espace</Button></Link>
       </div>
     );
@@ -188,7 +197,7 @@ export default function ForumPost() {
           <div className="flex items-center gap-6 pt-4 border-t border-border/40">
             <button
               onClick={handlePostLike}
-              disabled={likingPostId}
+              disabled={likingPost}
               className={`flex items-center gap-2 text-sm font-medium transition-all disabled:opacity-60 ${postLiked ? "text-red-400" : "text-muted-foreground hover:text-red-400"}`}
             >
               <Heart size={16} fill={postLiked ? "currentColor" : "none"} />
@@ -214,6 +223,7 @@ export default function ForumPost() {
             {comments.length > 0 ? `${comments.length} commentaire${comments.length !== 1 ? "s" : ""}` : "Aucun commentaire encore"}
           </h2>
         </div>
+
         <div className="mb-8 p-5 rounded-2xl border border-border/50 bg-card/60">
           {user ? (
             <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
@@ -228,11 +238,11 @@ export default function ForumPost() {
           <Textarea
             placeholder="Votre commentaire…"
             value={commentBody}
-            onChange={(e) => setCommentBody(e.target.value)}
+            onChange={e => setCommentBody(e.target.value)}
             rows={3}
             maxLength={1000}
             className="mb-3"
-            onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) requireUser(submitComment); }}
+            onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) requireUser(submitComment); }}
           />
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">Ctrl+Entrée pour envoyer</p>
@@ -242,13 +252,25 @@ export default function ForumPost() {
           </div>
         </div>
 
-        {/* Comments list */}
+        {/* Error */}
+        {error && (
+          <div className="flex items-center gap-2 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3 mb-6">
+            <AlertCircle size={15} />{error}
+          </div>
+        )}
+
+        {/* Comments */}
         <div className="space-y-4">
           {comments.map((cmt, i) => {
             const cLiked = user ? cmt.likes.includes(user.id) : false;
             return (
-              <motion.div key={cmt.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                className="p-5 rounded-2xl border border-border/50 bg-card">
+              <motion.div
+                key={cmt.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="p-5 rounded-2xl border border-border/50 bg-card"
+              >
                 <div className="flex items-center gap-3 mb-3">
                   <span className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary/15 text-secondary text-xs font-bold">{initials(cmt.author_name)}</span>
                   <div>
@@ -281,8 +303,14 @@ export default function ForumPost() {
       <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle className="font-serif">Qui êtes-vous ?</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">Choisissez un pseudo visible par la communauté.</p>
-          <Input placeholder="Votre pseudo (ex : Amara K.)" value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSetUser()} autoFocus />
+          <p className="text-sm text-muted-foreground">Choisissez un pseudo visible par toute la communauté.</p>
+          <Input
+            placeholder="Votre pseudo (ex : Amara K.)"
+            value={nameInput}
+            onChange={e => setNameInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleSetUser()}
+            autoFocus
+          />
           <Button onClick={handleSetUser} disabled={!nameInput.trim()} className="w-full">Confirmer</Button>
         </DialogContent>
       </Dialog>

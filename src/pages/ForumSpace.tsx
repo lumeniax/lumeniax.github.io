@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Link, useParams } from "wouter";
 import { fadeUp } from "@/lib/animations";
@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Heart, MessageSquare, PlusCircle, Users, ArrowRight, UserCircle2, Loader2, RefreshCw } from "lucide-react";
+import {
+  Heart, MessageSquare, PlusCircle, Users, ArrowRight,
+  UserCircle2, Loader2, RefreshCw, AlertCircle,
+} from "lucide-react";
 import {
   fetchPosts, fetchSpaces, createPost, togglePostLike, toggleMember,
   getForumUser, setForumUser,
@@ -14,7 +17,7 @@ import {
   type ForumPost, type ForumSpace, type ForumUser,
 } from "@/hooks/useForum";
 
-const POLL_MS = 20_000;
+const POLL_MS = 8_000;
 
 export default function ForumSpace() {
   const params = useParams<{ spaceId: string }>();
@@ -24,7 +27,8 @@ export default function ForumSpace() {
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [user, setUser] = useState<ForumUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<ForumUser | null>(getForumUser());
 
   const [showUserDialog, setShowUserDialog] = useState(false);
   const [showPostDialog, setShowPostDialog] = useState(false);
@@ -34,31 +38,34 @@ export default function ForumSpace() {
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [saving, setSaving] = useState(false);
   const [likingId, setLikingId] = useState<string | null>(null);
+  const [joiningSpace, setJoiningSpace] = useState(false);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  async function loadData(silent = false) {
+  const loadData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
+    setError(null);
     try {
       const [spaces, postsData] = await Promise.all([
         fetchSpaces(),
         fetchPosts(spaceId),
       ]);
-      setSpace(spaces.find((s) => s.id === spaceId) || null);
+      setSpace(spaces.find(s => s.id === spaceId) || null);
       setPosts(postsData);
+    } catch {
+      if (!silent) setError("Impossible de charger l'espace.");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }
+  }, [spaceId]);
 
   useEffect(() => {
-    setUser(getForumUser());
     loadData();
     intervalRef.current = setInterval(() => loadData(true), POLL_MS);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [spaceId]);
+  }, [loadData]);
 
   function requireUser(action: () => void) {
     const u = getForumUser();
@@ -78,22 +85,25 @@ export default function ForumSpace() {
   async function handleLike(postId: string) {
     requireUser(async () => {
       const u = getForumUser();
-      if (!u || likingId) return;
+      if (!u || likingId === postId) return;
       setLikingId(postId);
+
+      const post = posts.find(p => p.id === postId);
+      const alreadyLiked = post?.likes.includes(u.id) ?? false;
+      setPosts(prev => prev.map(p => {
+        if (p.id !== postId) return p;
+        const nowLiked = !alreadyLiked;
+        return {
+          ...p,
+          like_count: nowLiked ? p.like_count + 1 : p.like_count - 1,
+          likes: nowLiked ? [...p.likes, u.id] : p.likes.filter(id => id !== u.id),
+        };
+      }));
+
       try {
-        const { liked } = await togglePostLike(postId, u.id);
-        setPosts((prev) =>
-          prev.map((p) =>
-            p.id !== postId ? p : {
-              ...p,
-              liked,
-              like_count: liked ? p.like_count + 1 : p.like_count - 1,
-              likes: liked
-                ? [...p.likes, u.id]
-                : p.likes.filter((id) => id !== u.id),
-            }
-          )
-        );
+        await togglePostLike(postId, u.id);
+      } catch {
+        loadData(true);
       } finally {
         setLikingId(null);
       }
@@ -103,9 +113,16 @@ export default function ForumSpace() {
   async function handleJoin() {
     requireUser(async () => {
       const u = getForumUser();
-      if (!u) return;
-      await toggleMember(spaceId, u.id);
-      loadData(true);
+      if (!u || joiningSpace) return;
+      setJoiningSpace(true);
+      try {
+        await toggleMember(spaceId, u.id);
+        await loadData(true);
+      } catch {
+        await loadData(true);
+      } finally {
+        setJoiningSpace(false);
+      }
     });
   }
 
@@ -114,11 +131,16 @@ export default function ForumSpace() {
     if (!postTitle.trim() || !u) return;
     setSaving(true);
     try {
-      await createPost({ spaceId, title: postTitle.trim(), body: postBody.trim() }, u);
+      const newPost = await createPost({ spaceId, title: postTitle.trim(), body: postBody.trim() }, u);
+      setPosts(prev => [newPost, ...prev]);
+      setSpace(prev => prev ? { ...prev, post_count: prev.post_count + 1 } : prev);
       setPostTitle(""); setPostBody("");
       setShowPostDialog(false);
-      await loadData(true);
-    } finally { setSaving(false); }
+    } catch {
+      alert("Erreur lors de la publication. Veuillez réessayer.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) {
@@ -129,10 +151,10 @@ export default function ForumSpace() {
     );
   }
 
-  if (!space) {
+  if (error || !space) {
     return (
       <div className="w-full pt-40 pb-20 text-center">
-        <p className="text-muted-foreground">Espace introuvable.</p>
+        <p className="text-muted-foreground">{error || "Espace introuvable."}</p>
         <Link href="/academy/communaute"><Button variant="outline" className="mt-6">← Retour à la communauté</Button></Link>
       </div>
     );
@@ -158,8 +180,17 @@ export default function ForumSpace() {
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users size={14} />{space.member_count} membre{space.member_count !== 1 ? "s" : ""}
               </div>
-              <Button size="sm" variant={isMember ? "secondary" : "default"} onClick={handleJoin} className="gap-2">
-                {isMember ? "✓ Rejoint" : "Rejoindre"}
+              <Button
+                size="sm"
+                variant={isMember ? "secondary" : "default"}
+                disabled={joiningSpace}
+                onClick={handleJoin}
+                className="gap-2"
+              >
+                {joiningSpace
+                  ? <Loader2 size={13} className="animate-spin" />
+                  : isMember ? "✓ Rejoint" : "Rejoindre"
+                }
               </Button>
             </div>
           </div>
@@ -192,6 +223,13 @@ export default function ForumSpace() {
           </div>
         </div>
 
+        {/* Error */}
+        {error && (
+          <div className="flex items-center gap-2 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3 mb-6">
+            <AlertCircle size={15} />{error}
+          </div>
+        )}
+
         {/* Posts */}
         <div className="space-y-4">
           {posts.length === 0 && (
@@ -203,8 +241,13 @@ export default function ForumSpace() {
           {posts.map((post, i) => {
             const liked = user ? post.likes.includes(user.id) : false;
             return (
-              <motion.div key={post.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                className="p-6 rounded-2xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-md hover:shadow-primary/5 transition-all duration-300">
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="p-6 rounded-2xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-md hover:shadow-primary/5 transition-all duration-300"
+              >
                 <div className="flex items-start gap-4">
                   <span className="flex-none flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 text-primary text-sm font-bold mt-0.5">
                     {initials(post.author_name)}
@@ -245,8 +288,14 @@ export default function ForumSpace() {
       <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle className="font-serif">Qui êtes-vous ?</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">Choisissez un pseudo visible par la communauté.</p>
-          <Input placeholder="Votre pseudo (ex : Amara K.)" value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSetUser()} autoFocus />
+          <p className="text-sm text-muted-foreground">Choisissez un pseudo visible par toute la communauté.</p>
+          <Input
+            placeholder="Votre pseudo (ex : Amara K.)"
+            value={nameInput}
+            onChange={e => setNameInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleSetUser()}
+            autoFocus
+          />
           <Button onClick={handleSetUser} disabled={!nameInput.trim()} className="w-full">Confirmer</Button>
         </DialogContent>
       </Dialog>
@@ -256,8 +305,8 @@ export default function ForumSpace() {
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle className="font-serif">Nouveau post</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <Input placeholder="Titre du post" value={postTitle} onChange={(e) => setPostTitle(e.target.value)} maxLength={120} autoFocus />
-            <Textarea placeholder="Développez votre idée, question ou partage…" value={postBody} onChange={(e) => setPostBody(e.target.value)} rows={5} maxLength={2000} />
+            <Input placeholder="Titre du post" value={postTitle} onChange={e => setPostTitle(e.target.value)} maxLength={120} autoFocus />
+            <Textarea placeholder="Développez votre idée, question ou partage…" value={postBody} onChange={e => setPostBody(e.target.value)} rows={5} maxLength={2000} />
             <Button onClick={submitPost} disabled={!postTitle.trim() || saving} className="w-full">
               {saving ? <Loader2 className="animate-spin" size={16} /> : "Publier"}
             </Button>
