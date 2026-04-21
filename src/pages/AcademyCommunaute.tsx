@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users, MessageSquare, Network, PlusCircle, LogIn, Hash,
   UserCircle2, Loader2, Search, RefreshCw, X, AlertCircle,
@@ -14,7 +15,7 @@ import {
 import {
   fetchSpaces, createSpace, toggleMember,
   getForumUser, setForumUser,
-  relTime, initials,
+  initials,
   type ForumSpace, type ForumUser,
 } from "@/hooks/useForum";
 
@@ -28,7 +29,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 const EMOJIS = ["💬", "📚", "🤝", "🧠", "⚡", "🎯", "🌍", "🚀", "💡", "🎓"];
 
-const POLL_MS = 8_000;
+const POLL_MS = 15_000; // Reduced polling frequency for Supabase
 
 export default function AcademyCommunaute() {
   const [spaces, setSpaces] = useState<ForumSpace[]>([]);
@@ -61,7 +62,7 @@ export default function AcademyCommunaute() {
       const data = await fetchSpaces();
       setSpaces(data);
     } catch (e) {
-      if (!silent) setError("Impossible de charger les espaces. Vérifiez votre connexion.");
+      if (!silent) setError("Communauté en cours d’activation. Revenez très bientôt !");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -127,7 +128,7 @@ export default function AcademyCommunaute() {
       setNewName(""); setNewDesc(""); setNewEmoji("💬"); setNewCategory("echange");
       setShowSpaceDialog(false);
     } catch {
-      alert("Erreur lors de la création de l'espace. Veuillez réessayer.");
+      setError("Erreur lors de la création de l'espace. Veuillez réessayer.");
     } finally {
       setSaving(false);
     }
@@ -229,7 +230,7 @@ export default function AcademyCommunaute() {
 
         {/* Error state */}
         {error && (
-          <div className="flex items-center gap-2 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3 mb-6">
+          <div className="flex items-center gap-2 text-sm text-primary bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mb-6">
             <AlertCircle size={15} />
             {error}
             <button onClick={() => loadSpaces()} className="ml-auto underline underline-offset-2 hover:opacity-80">Réessayer</button>
@@ -237,8 +238,22 @@ export default function AcademyCommunaute() {
         )}
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="animate-spin text-primary" size={32} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="p-6 rounded-2xl bg-card border border-border/50 space-y-4">
+                <Skeleton className="h-10 w-10 rounded-lg" />
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-16 w-full" />
+                <div className="flex gap-4">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <div className="flex gap-2">
+                  <Skeleton className="h-9 flex-1" />
+                  <Skeleton className="h-9 w-24" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -282,7 +297,7 @@ export default function AcademyCommunaute() {
                 </motion.div>
               );
             })}
-            {filtered.length === 0 && !query && (
+            {filtered.length === 0 && !query && !error && (
               <p className="col-span-3 text-center text-muted-foreground mt-16">Aucun espace dans cette catégorie.</p>
             )}
           </div>
