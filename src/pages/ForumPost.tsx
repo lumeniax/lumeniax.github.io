@@ -104,7 +104,7 @@ export default function ForumPost() {
         setReplies(reps);
       } catch (e) {
         if (!silent)
-          setError("Communauté en cours d’activation. Revenez très bientôt !");
+          console.error("loadPost failed");
       } finally {
         setLoading(false);
         setRefreshing(false);

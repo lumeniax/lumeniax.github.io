@@ -96,8 +96,7 @@ export default function AcademyCommunaute() {
       const data = await fetchSpaces();
       setSpaces(data);
     } catch (e) {
-      if (!silent)
-        setError("Communauté en cours d’activation. Revenez très bientôt !");
+      console.error("loadSpaces failed:", e);
     } finally {
       setLoading(false);
       setRefreshing(false);

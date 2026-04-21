@@ -91,7 +91,7 @@ export default function ForumSpace() {
         setPosts(postsData);
       } catch (e) {
         if (!silent)
-          setError("Communauté en cours d’activation. Revenez très bientôt !");
+          console.error("loadSpace failed");
       } finally {
         setLoading(false);
         setRefreshing(false);
