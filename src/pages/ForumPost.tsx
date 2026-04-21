@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Heart, MessageSquare, ArrowLeft, UserCircle2, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import {
   fetchPost, fetchSpaces, fetchComments, createComment,
@@ -15,7 +16,7 @@ import {
   type ForumPost, type ForumComment, type ForumUser,
 } from "@/hooks/useForum";
 
-const POLL_MS = 8_000;
+const POLL_MS = 15_000;
 
 export default function ForumPost() {
   const params = useParams<{ spaceId: string; postId: string }>();
@@ -54,8 +55,8 @@ export default function ForumPost() {
       setComments(cmts);
       const s = spaces.find(x => x.id === spaceId);
       if (s) setSpaceName(s.name);
-    } catch {
-      if (!silent) setError("Impossible de charger le post.");
+    } catch (e) {
+      if (!silent) setError("Communauté en cours d’activation. Revenez très bientôt !");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -145,7 +146,7 @@ export default function ForumPost() {
       setPost(prev => prev ? { ...prev, comment_count: prev.comment_count + 1 } : prev);
       setCommentBody("");
     } catch {
-      alert("Erreur lors de l'envoi du commentaire. Veuillez réessayer.");
+      setError("Erreur lors de l'envoi du commentaire. Veuillez réessayer.");
     } finally {
       setSaving(false);
     }
@@ -153,17 +154,33 @@ export default function ForumPost() {
 
   if (loading) {
     return (
-      <div className="w-full pt-40 flex justify-center">
-        <Loader2 className="animate-spin text-primary" size={36} />
+      <div className="w-full pt-32 pb-24">
+        <div className="container mx-auto px-6 md:px-12 max-w-3xl">
+          <Skeleton className="h-6 w-48 mb-8" />
+          <Skeleton className="h-64 w-full rounded-2xl mb-10" />
+          <Skeleton className="h-32 w-full rounded-2xl mb-8" />
+          <div className="space-y-4">
+            {[1, 2].map(i => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !post) {
     return (
-      <div className="w-full pt-40 pb-20 text-center">
-        <p className="text-muted-foreground">{error || "Post introuvable."}</p>
-        <Link href={`/academy/communaute/${spaceId}`}><Button variant="outline" className="mt-6">← Retour à l'espace</Button></Link>
+      <div className="w-full pt-40 pb-20 text-center px-6">
+        <div className="max-w-md mx-auto">
+          <AlertCircle className="mx-auto mb-4 text-primary opacity-50" size={48} />
+          <h2 className="text-2xl font-serif mb-2">Oups !</h2>
+          <p className="text-muted-foreground mb-8">{error || "Post introuvable."}</p>
+          <Link href={`/academy/communaute/${spaceId}`}>
+            <Button variant="outline" className="gap-2">
+              <ArrowLeft size={16} />
+              Retour à l'espace
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -252,9 +269,9 @@ export default function ForumPost() {
           </div>
         </div>
 
-        {/* Error */}
+        {/* Error message if any */}
         {error && (
-          <div className="flex items-center gap-2 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3 mb-6">
+          <div className="flex items-center gap-2 text-sm text-primary bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mb-6">
             <AlertCircle size={15} />{error}
           </div>
         )}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Heart, MessageSquare, PlusCircle, Users, ArrowRight,
   UserCircle2, Loader2, RefreshCw, AlertCircle,
@@ -17,7 +18,7 @@ import {
   type ForumPost, type ForumSpace, type ForumUser,
 } from "@/hooks/useForum";
 
-const POLL_MS = 8_000;
+const POLL_MS = 15_000;
 
 export default function ForumSpace() {
   const params = useParams<{ spaceId: string }>();
@@ -51,10 +52,12 @@ export default function ForumSpace() {
         fetchSpaces(),
         fetchPosts(spaceId),
       ]);
-      setSpace(spaces.find(s => s.id === spaceId) || null);
+      const currentSpace = spaces.find(s => s.id === spaceId);
+      if (!currentSpace) throw new Error("Espace introuvable");
+      setSpace(currentSpace);
       setPosts(postsData);
-    } catch {
-      if (!silent) setError("Impossible de charger l'espace.");
+    } catch (e) {
+      if (!silent) setError("Communauté en cours d’activation. Revenez très bientôt !");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -137,7 +140,7 @@ export default function ForumSpace() {
       setPostTitle(""); setPostBody("");
       setShowPostDialog(false);
     } catch {
-      alert("Erreur lors de la publication. Veuillez réessayer.");
+      setError("Erreur lors de la publication. Veuillez réessayer.");
     } finally {
       setSaving(false);
     }
@@ -145,17 +148,35 @@ export default function ForumSpace() {
 
   if (loading) {
     return (
-      <div className="w-full pt-40 flex justify-center">
-        <Loader2 className="animate-spin text-primary" size={36} />
+      <div className="w-full pt-32 pb-24">
+        <div className="container mx-auto px-6 md:px-12 max-w-4xl">
+          <Skeleton className="h-48 w-full rounded-2xl mb-10" />
+          <div className="flex justify-between mb-8">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !space) {
     return (
-      <div className="w-full pt-40 pb-20 text-center">
-        <p className="text-muted-foreground">{error || "Espace introuvable."}</p>
-        <Link href="/academy/communaute"><Button variant="outline" className="mt-6">← Retour à la communauté</Button></Link>
+      <div className="w-full pt-40 pb-20 text-center px-6">
+        <div className="max-w-md mx-auto">
+          <AlertCircle className="mx-auto mb-4 text-primary opacity-50" size={48} />
+          <h2 className="text-2xl font-serif mb-2">Oups !</h2>
+          <p className="text-muted-foreground mb-8">{error || "Espace introuvable."}</p>
+          <Link href="/academy/communaute">
+            <Button variant="outline" className="gap-2">
+              <ArrowRight size={16} className="rotate-180" />
+              Retour à la communauté
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -223,16 +244,16 @@ export default function ForumSpace() {
           </div>
         </div>
 
-        {/* Error */}
+        {/* Error message if any */}
         {error && (
-          <div className="flex items-center gap-2 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3 mb-6">
+          <div className="flex items-center gap-2 text-sm text-primary bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mb-6">
             <AlertCircle size={15} />{error}
           </div>
         )}
 
         {/* Posts */}
         <div className="space-y-4">
-          {posts.length === 0 && (
+          {posts.length === 0 && !error && (
             <div className="text-center py-20 text-muted-foreground">
               <MessageSquare size={40} className="mx-auto mb-4 opacity-30" />
               <p>Aucun post encore. Soyez le premier !</p>
