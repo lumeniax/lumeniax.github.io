@@ -173,10 +173,19 @@ export default function AcademyCommunaute() {
 
   async function submitSpace() {
     const u = getForumUser();
-    if (!newName.trim() || !u) return;
+    if (!newName.trim()) {
+      setError("Veuillez saisir un nom d'espace.");
+      return;
+    }
+    if (!u) {
+      setError("Veuillez d'abord définir votre pseudo.");
+      setShowUserDialog(true);
+      return;
+    }
+    setError(null);
     setSaving(true);
     try {
-      await createSpace(
+      const created = await createSpace(
         {
           name: newName.trim(),
           description: newDesc.trim(),
@@ -185,14 +194,24 @@ export default function AcademyCommunaute() {
         },
         u
       );
-      await loadSpaces(true);
+      setSpaces((prev) => [created, ...prev.filter((s) => s.id !== created.id)]);
       setNewName("");
       setNewDesc("");
       setNewEmoji("💬");
       setNewCategory("echange");
       setShowSpaceDialog(false);
-    } catch {
-      setError("Erreur lors de la création de l'espace. Veuillez réessayer.");
+      loadSpaces(true);
+    } catch (e: any) {
+      console.error("createSpace failed:", e);
+      const detail =
+        e?.message && !/^HTTP\s/i.test(e.message)
+          ? ` (${e.message})`
+          : e?.message
+            ? ` (${e.message})`
+            : "";
+      setError(
+        `Impossible de créer l'espace${detail}. Vérifiez que le serveur API est bien démarré.`
+      );
     } finally {
       setSaving(false);
     }
