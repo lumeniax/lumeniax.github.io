@@ -6,7 +6,7 @@
   "scripts": {
     "manifest": "node scripts/generate-manifest.js",
     "predev": "node scripts/generate-manifest.js",
-    "dev": "vite",
+    "dev": "node server/index.js & vite",
     "server": "node server/index.js",
     "dev:all": "node server/index.js & sleep 2 && npm run dev",
     "prebuild": "node scripts/generate-manifest.js",
