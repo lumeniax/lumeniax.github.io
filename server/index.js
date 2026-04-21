@@ -17,6 +17,13 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 app.use(cors());
 app.use(express.json());
 
+app.use((req, _res, next) => {
+  if (req.url.startsWith("/api/")) {
+    console.log(`[api] ${req.method} ${req.url}`);
+  }
+  next();
+});
+
 function uid() {
   return Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
 }
