@@ -1,0 +1,67 @@
+Tu es un ingénieur logiciel senior expert en Node.js, Express, Vite et React.
+
+Analyse entièrement mon projet (frontend + backend) et corrige AUTOMATIQUEMENT toutes les erreurs empêchant la création d’un espace (erreur HTTP 405 actuelle).
+
+CONTEXTE IMPORTANT :
+
+* Mon backend expose les routes sous `/api/forum/...`
+* Mon frontend appelle probablement `/api/spaces` (incorrect)
+* Le projet utilise Vite avec proxy vers `http://127.0.0.1:3001`
+* Le backend fonctionne avec Express + PostgreSQL
+* L’erreur actuelle est : "Impossible de créer l'espace (HTTP 405)"
+
+OBJECTIFS :
+
+1. Corriger TOUTES les incohérences entre frontend et backend :
+
+   * Routes (ex: `/api/spaces` vs `/api/forum/spaces`)
+   * Méthodes HTTP (GET, POST, etc.)
+   * Headers (Content-Type)
+   * Body JSON
+
+2. Vérifier et corriger :
+
+   * Le proxy Vite
+   * Les appels fetch / axios
+   * Les endpoints Express
+   * Les erreurs silencieuses
+
+3. Garantir que :
+
+   * La création d’un espace fonctionne (POST /api/forum/spaces)
+   * La récupération des espaces fonctionne
+   * Aucun HTTP 404 / 405 / 500 ne subsiste
+
+4. Ajouter si nécessaire :
+
+   * Logs backend utiles (console.log)
+   * Messages d’erreur clairs côté frontend
+   * Vérification des données envoyées
+
+5. Tester mentalement tous les flux :
+
+   * Création espace
+   * Liste espaces
+   * Rejoindre espace
+
+SORTIE ATTENDUE :
+
+* Fournir les fichiers COMPLETS corrigés :
+
+  * frontend (React)
+  * backend (Express)
+  * vite.config.js si modifié
+* Ne pas donner des extraits → donner des fichiers entiers prêts à fonctionner
+* Générer un fichier ZIP contenant tout le projet corrigé
+* S’assurer que le projet fonctionne directement après `npm install` + `npm run dev`
+
+CONTRAINTE :
+
+* Ne rien casser dans le reste de l’application
+* Garder la structure actuelle du projet
+* Optimiser le code si nécessaire
+
+IMPORTANT :
+Avant de répondre, vérifie que toutes les routes frontend correspondent EXACTEMENT aux routes backend.
+
+LIVRE un résultat propre, professionnel, sans explication inutile.
