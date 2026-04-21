@@ -1,5 +1,3 @@
-import { supabase } from "@/lib/supabaseClient";
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ForumUser {
@@ -14,6 +12,8 @@ export interface ForumSpace {
   emoji: string;
   category: "echange" | "club" | "reseau";
   created_at: string;
+  author_id?: string;
+  author_name?: string;
   member_count: number;
   post_count: number;
   members: string[];
@@ -43,9 +43,42 @@ export interface ForumComment {
   likes: string[];
 }
 
+export interface ForumReply {
+  id: string;
+  comment_id: string;
+  body: string;
+  author_id: string;
+  author_name: string;
+  created_at: string;
+  like_count: number;
+  likes: string[];
+}
+
+// ─── HTTP helper ─────────────────────────────────────────────────────────────
+
+async function api<T>(
+  url: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try {
+      const j = await res.json();
+      if (j?.error) msg = j.error;
+    } catch {}
+    throw new Error(msg);
+  }
+  return (await res.json()) as T;
+}
+
 // ─── User identity (localStorage only) ───────────────────────────────────────
 
 const USER_KEY = "lx_forum_user";
+const FAVORITES_KEY = "lx_forum_favorites";
 
 function uid(): string {
   return Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
@@ -66,209 +99,179 @@ export function setForumUser(name: string): ForumUser {
   return user;
 }
 
+export function getFavoriteSpaces(): string[] {
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function toggleFavoriteSpace(spaceId: string): boolean {
+  const favs = getFavoriteSpaces();
+  const next = favs.includes(spaceId)
+    ? favs.filter((id) => id !== spaceId)
+    : [...favs, spaceId];
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+  return next.includes(spaceId);
+}
+
 // ─── Spaces ───────────────────────────────────────────────────────────────────
 
-export const fetchSpaces = async (): Promise<ForumSpace[]> => {
-  const { data, error } = await supabase
-    .from('spaces')
-    .select('*')
-    .order('created_at', { ascending: false });
-  
-  if (error) throw error;
-  return (data || []) as ForumSpace[];
-};
+export const fetchSpaces = (): Promise<ForumSpace[]> =>
+  api<ForumSpace[]>("/api/forum/spaces");
 
-export const createSpace = async (
+export const createSpace = (
   data: Pick<ForumSpace, "name" | "description" | "emoji" | "category">,
   author: ForumUser
-): Promise<ForumSpace> => {
-  const { data: space, error } = await supabase
-    .from('spaces')
-    .insert([{
+): Promise<ForumSpace> =>
+  api<ForumSpace>("/api/forum/spaces", {
+    method: "POST",
+    body: JSON.stringify({
       ...data,
-      author_id: author.id,
-      author_name: author.name,
-      members: [author.id],
-      member_count: 1,
-      post_count: 0
-    }])
-    .select()
-    .single();
+      authorId: author.id,
+      authorName: author.name,
+    }),
+  });
 
-  if (error) throw error;
-  return space as ForumSpace;
-};
-
-export const toggleMember = async (spaceId: string, userId: string): Promise<{ joined: boolean }> => {
-  // Fetch current members
-  const { data: space, error: fetchError } = await supabase
-    .from('spaces')
-    .select('members')
-    .eq('id', spaceId)
-    .single();
-
-  if (fetchError) throw fetchError;
-
-  const members = space.members || [];
-  const isMember = members.includes(userId);
-  const newMembers = isMember 
-    ? members.filter((id: string) => id !== userId)
-    : [...members, userId];
-
-  const { error: updateError } = await supabase
-    .from('spaces')
-    .update({ 
-      members: newMembers,
-      member_count: newMembers.length
-    })
-    .eq('id', spaceId);
-
-  if (updateError) throw updateError;
-  return { joined: !isMember };
-};
+export const toggleMember = (
+  spaceId: string,
+  userId: string
+): Promise<{ joined: boolean }> =>
+  api<{ joined: boolean }>(`/api/forum/spaces/${spaceId}/join`, {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
 
-export const fetchPosts = async (spaceId: string): Promise<ForumPost[]> => {
-  const { data, error } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('space_id', spaceId)
-    .order('created_at', { ascending: false });
+export const fetchPosts = (spaceId: string): Promise<ForumPost[]> =>
+  api<ForumPost[]>(`/api/forum/spaces/${spaceId}/posts`);
 
-  if (error) throw error;
-  return (data || []) as ForumPost[];
-};
+export const fetchPost = (postId: string): Promise<ForumPost> =>
+  api<ForumPost>(`/api/forum/posts/${postId}`);
 
-export const fetchPost = async (postId: string): Promise<ForumPost> => {
-  const { data, error } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('id', postId)
-    .single();
-
-  if (error) throw error;
-  return data as ForumPost;
-};
-
-export const createPost = async (
+export const createPost = (
   data: { spaceId: string; title: string; body: string },
   author: ForumUser
-): Promise<ForumPost> => {
-  const { data: post, error } = await supabase
-    .from('posts')
-    .insert([{
-      space_id: data.spaceId,
+): Promise<ForumPost> =>
+  api<ForumPost>("/api/forum/posts", {
+    method: "POST",
+    body: JSON.stringify({
+      spaceId: data.spaceId,
       title: data.title,
       body: data.body,
-      author_id: author.id,
-      author_name: author.name,
-      likes: [],
-      like_count: 0,
-      comment_count: 0
-    }])
-    .select()
-    .single();
+      authorId: author.id,
+      authorName: author.name,
+    }),
+  });
 
-  if (error) throw error;
+export const updatePost = (
+  postId: string,
+  data: { title: string; body: string },
+  user: ForumUser
+): Promise<void> =>
+  api(`/api/forum/posts/${postId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ ...data, userId: user.id }),
+  });
 
-  // Increment post_count in space
-  await supabase.rpc('increment_post_count', { space_row_id: data.spaceId });
+export const deletePost = (postId: string, user: ForumUser): Promise<void> =>
+  api(`/api/forum/posts/${postId}`, {
+    method: "DELETE",
+    body: JSON.stringify({ userId: user.id }),
+  });
 
-  return post as ForumPost;
-};
-
-export const togglePostLike = async (postId: string, userId: string): Promise<{ liked: boolean }> => {
-  const { data: post, error: fetchError } = await supabase
-    .from('posts')
-    .select('likes')
-    .eq('id', postId)
-    .single();
-
-  if (fetchError) throw fetchError;
-
-  const likes = post.likes || [];
-  const isLiked = likes.includes(userId);
-  const newLikes = isLiked 
-    ? likes.filter((id: string) => id !== userId)
-    : [...likes, userId];
-
-  const { error: updateError } = await supabase
-    .from('posts')
-    .update({ 
-      likes: newLikes,
-      like_count: newLikes.length
-    })
-    .eq('id', postId);
-
-  if (updateError) throw updateError;
-  return { liked: !isLiked };
-};
+export const togglePostLike = (
+  postId: string,
+  userId: string
+): Promise<{ liked: boolean }> =>
+  api(`/api/forum/posts/${postId}/like`, {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
 
 // ─── Comments ─────────────────────────────────────────────────────────────────
 
-export const fetchComments = async (postId: string): Promise<ForumComment[]> => {
-  const { data, error } = await supabase
-    .from('comments')
-    .select('*')
-    .eq('post_id', postId)
-    .order('created_at', { ascending: true });
+export const fetchComments = (postId: string): Promise<ForumComment[]> =>
+  api<ForumComment[]>(`/api/forum/posts/${postId}/comments`);
 
-  if (error) throw error;
-  return (data || []) as ForumComment[];
-};
-
-export const createComment = async (
+export const createComment = (
   data: { postId: string; body: string },
   author: ForumUser
-): Promise<ForumComment> => {
-  const { data: comment, error } = await supabase
-    .from('comments')
-    .insert([{
-      post_id: data.postId,
+): Promise<ForumComment> =>
+  api<ForumComment>("/api/forum/comments", {
+    method: "POST",
+    body: JSON.stringify({
+      postId: data.postId,
       body: data.body,
-      author_id: author.id,
-      author_name: author.name,
-      likes: [],
-      like_count: 0
-    }])
-    .select()
-    .single();
+      authorId: author.id,
+      authorName: author.name,
+    }),
+  });
 
-  if (error) throw error;
+export const updateComment = (
+  commentId: string,
+  body: string,
+  user: ForumUser
+): Promise<void> =>
+  api(`/api/forum/comments/${commentId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ body, userId: user.id }),
+  });
 
-  // Increment comment_count in post
-  await supabase.rpc('increment_comment_count', { post_row_id: data.postId });
+export const deleteComment = (
+  commentId: string,
+  user: ForumUser
+): Promise<void> =>
+  api(`/api/forum/comments/${commentId}`, {
+    method: "DELETE",
+    body: JSON.stringify({ userId: user.id }),
+  });
 
-  return comment as ForumComment;
-};
+export const toggleCommentLike = (
+  commentId: string,
+  userId: string
+): Promise<{ liked: boolean }> =>
+  api(`/api/forum/comments/${commentId}/like`, {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
 
-export const toggleCommentLike = async (commentId: string, userId: string): Promise<{ liked: boolean }> => {
-  const { data: comment, error: fetchError } = await supabase
-    .from('comments')
-    .select('likes')
-    .eq('id', commentId)
-    .single();
+// ─── Replies ──────────────────────────────────────────────────────────────────
 
-  if (fetchError) throw fetchError;
+export const fetchReplies = (postId: string): Promise<ForumReply[]> =>
+  api<ForumReply[]>(`/api/forum/posts/${postId}/replies`);
 
-  const likes = comment.likes || [];
-  const isLiked = likes.includes(userId);
-  const newLikes = isLiked 
-    ? likes.filter((id: string) => id !== userId)
-    : [...likes, userId];
+export const createReply = (
+  data: { commentId: string; body: string },
+  author: ForumUser
+): Promise<ForumReply> =>
+  api<ForumReply>("/api/forum/replies", {
+    method: "POST",
+    body: JSON.stringify({
+      commentId: data.commentId,
+      body: data.body,
+      authorId: author.id,
+      authorName: author.name,
+    }),
+  });
 
-  const { error: updateError } = await supabase
-    .from('comments')
-    .update({ 
-      likes: newLikes,
-      like_count: newLikes.length
-    })
-    .eq('id', commentId);
+export const deleteReply = (replyId: string, user: ForumUser): Promise<void> =>
+  api(`/api/forum/replies/${replyId}`, {
+    method: "DELETE",
+    body: JSON.stringify({ userId: user.id }),
+  });
 
-  if (updateError) throw updateError;
-  return { liked: !isLiked };
-};
+export const toggleReplyLike = (
+  replyId: string,
+  userId: string
+): Promise<{ liked: boolean }> =>
+  api(`/api/forum/replies/${replyId}/like`, {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
 
 // ─── Formatting ───────────────────────────────────────────────────────────────
 
@@ -279,7 +282,10 @@ export function relTime(iso: string): string {
   if (diff < 3600) return `il y a ${Math.floor(diff / 60)} min`;
   if (diff < 86400) return `il y a ${Math.floor(diff / 3600)} h`;
   if (diff < 604800) return `il y a ${Math.floor(diff / 86400)} j`;
-  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  return new Date(iso).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
+  });
 }
 
 export function initials(name: string): string {
@@ -290,4 +296,19 @@ export function initials(name: string): string {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+}
+
+export function avatarColor(name: string): string {
+  const palette = [
+    "bg-rose-500/15 text-rose-400",
+    "bg-amber-500/15 text-amber-400",
+    "bg-emerald-500/15 text-emerald-400",
+    "bg-sky-500/15 text-sky-400",
+    "bg-violet-500/15 text-violet-400",
+    "bg-fuchsia-500/15 text-fuchsia-400",
+    "bg-teal-500/15 text-teal-400",
+  ];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
+  return palette[Math.abs(h) % palette.length];
 }
