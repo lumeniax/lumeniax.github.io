@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Heart, MessageSquare, ArrowLeft, UserCircle2, Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { Heart, MessageSquare, ArrowLeft, UserCircle2, Loader2, RefreshCw, AlertCircle, Crown } from "lucide-react";
 import {
   fetchPost, fetchSpaces, fetchComments, createComment,
   togglePostLike, toggleCommentLike,
@@ -56,7 +56,7 @@ export default function ForumPost() {
       const s = spaces.find(x => x.id === spaceId);
       if (s) setSpaceName(s.name);
     } catch (e) {
-      if (!silent) setError("Communauté en cours d’activation. Revenez très bientôt !");
+      if (!silent) setError("Impossible de charger le post. Veuillez réessayer.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -77,7 +77,7 @@ export default function ForumPost() {
 
   function handleSetUser() {
     if (!nameInput.trim()) return;
-    const u = setForumUser(nameInput);
+    const u = setForumUser(nameInput, true);
     setUser(u);
     setShowUserDialog(false);
     setNameInput("");
@@ -145,7 +145,7 @@ export default function ForumPost() {
       setComments(prev => [...prev, newCmt]);
       setPost(prev => prev ? { ...prev, comment_count: prev.comment_count + 1 } : prev);
       setCommentBody("");
-    } catch {
+    } catch (e) {
       setError("Erreur lors de l'envoi du commentaire. Veuillez réessayer.");
     } finally {
       setSaving(false);
@@ -201,9 +201,9 @@ export default function ForumPost() {
         </div>
 
         {/* Post */}
-        <motion.div initial="hidden" animate="visible" variants={fadeUp} className="p-8 rounded-2xl border border-border/50 bg-card mb-10">
+        <motion.div initial="hidden" animate="visible" variants={fadeUp} className="p-8 rounded-2xl border border-border/50 bg-gradient-to-br from-card to-card/80 mb-10">
           <div className="flex items-center gap-3 mb-4">
-            <span className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 text-primary text-sm font-bold">{initials(post.author_name)}</span>
+            <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 text-primary text-sm font-bold">{initials(post.author_name)}</span>
             <div>
               <p className="text-sm font-semibold">{post.author_name}</p>
               <p className="text-xs text-muted-foreground">{relTime(post.created_at)}</p>
@@ -241,19 +241,20 @@ export default function ForumPost() {
           </h2>
         </div>
 
-        <div className="mb-8 p-5 rounded-2xl border border-border/50 bg-card/60">
+        <div className="mb-8 p-5 rounded-2xl border border-border/50 bg-gradient-to-br from-card to-card/80">
           {user ? (
             <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold">{initials(user.name)}</span>
-              Commenter en tant que <span className="font-semibold text-foreground">{user.name}</span>
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground text-xs font-bold">{initials(user.name)}</span>
+              Répondre en tant que <span className="font-semibold text-foreground">{user.name}</span>
+              {user.isPremium && <Crown size={14} className="text-amber-500 ml-1" />}
             </div>
           ) : (
             <button onClick={() => setShowUserDialog(true)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-3">
-              <UserCircle2 size={16} />Définir mon pseudo pour commenter
+              <UserCircle2 size={16} />Rejoindre pour répondre
             </button>
           )}
           <Textarea
-            placeholder="Votre commentaire…"
+            placeholder="Votre réponse…"
             value={commentBody}
             onChange={e => setCommentBody(e.target.value)}
             rows={3}
@@ -263,8 +264,8 @@ export default function ForumPost() {
           />
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">Ctrl+Entrée pour envoyer</p>
-            <Button size="sm" onClick={() => requireUser(submitComment)} disabled={!commentBody.trim() || saving}>
-              {saving ? <Loader2 className="animate-spin" size={14} /> : "Commenter"}
+            <Button size="sm" onClick={() => requireUser(submitComment)} disabled={!commentBody.trim() || saving} className="bg-gradient-to-r from-primary to-secondary">
+              {saving ? <Loader2 className="animate-spin" size={14} /> : "Répondre"}
             </Button>
           </div>
         </div>
@@ -286,10 +287,10 @@ export default function ForumPost() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
-                className="p-5 rounded-2xl border border-border/50 bg-card"
+                className="p-5 rounded-2xl border border-border/50 bg-gradient-to-br from-card to-card/80"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary/15 text-secondary text-xs font-bold">{initials(cmt.author_name)}</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-secondary/15 to-primary/15 text-secondary text-xs font-bold">{initials(cmt.author_name)}</span>
                   <div>
                     <p className="text-sm font-semibold">{cmt.author_name}</p>
                     <p className="text-xs text-muted-foreground">{relTime(cmt.created_at)}</p>
@@ -319,7 +320,10 @@ export default function ForumPost() {
       {/* Dialog: pseudo */}
       <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle className="font-serif">Qui êtes-vous ?</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-serif flex items-center gap-2">
+            <Crown size={20} className="text-amber-500" />
+            Rejoindre la Communauté Premium
+          </DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">Choisissez un pseudo visible par toute la communauté.</p>
           <Input
             placeholder="Votre pseudo (ex : Amara K.)"
@@ -328,7 +332,7 @@ export default function ForumPost() {
             onKeyDown={e => e.key === "Enter" && handleSetUser()}
             autoFocus
           />
-          <Button onClick={handleSetUser} disabled={!nameInput.trim()} className="w-full">Confirmer</Button>
+          <Button onClick={handleSetUser} disabled={!nameInput.trim()} className="w-full bg-gradient-to-r from-primary to-secondary">Confirmer</Button>
         </DialogContent>
       </Dialog>
     </div>

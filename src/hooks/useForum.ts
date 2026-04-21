@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 export interface ForumUser {
   id: string;
   name: string;
+  isPremium?: boolean;
 }
 
 export interface ForumSpace {
@@ -17,6 +18,8 @@ export interface ForumSpace {
   member_count: number;
   post_count: number;
   members: string[];
+  author_id: string;
+  author_name: string;
 }
 
 export interface ForumPost {
@@ -60,8 +63,8 @@ export function getForumUser(): ForumUser | null {
   }
 }
 
-export function setForumUser(name: string): ForumUser {
-  const user: ForumUser = { id: uid(), name: name.trim() };
+export function setForumUser(name: string, isPremium = true): ForumUser {
+  const user: ForumUser = { id: uid(), name: name.trim(), isPremium };
   localStorage.setItem(USER_KEY, JSON.stringify(user));
   return user;
 }
@@ -100,7 +103,6 @@ export const createSpace = async (
 };
 
 export const toggleMember = async (spaceId: string, userId: string): Promise<{ joined: boolean }> => {
-  // Fetch current members
   const { data: space, error: fetchError } = await supabase
     .from('spaces')
     .select('members')
@@ -173,7 +175,12 @@ export const createPost = async (
   if (error) throw error;
 
   // Increment post_count in space
-  await supabase.rpc('increment_post_count', { space_row_id: data.spaceId });
+  const { error: updateError } = await supabase
+    .from('spaces')
+    .update({ post_count: supabase.rpc('increment_post_count', { space_row_id: data.spaceId }) })
+    .eq('id', data.spaceId);
+
+  if (updateError) console.warn("Failed to increment post count:", updateError);
 
   return post as ForumPost;
 };
@@ -238,7 +245,12 @@ export const createComment = async (
   if (error) throw error;
 
   // Increment comment_count in post
-  await supabase.rpc('increment_comment_count', { post_row_id: data.postId });
+  const { error: updateError } = await supabase
+    .from('posts')
+    .update({ comment_count: supabase.rpc('increment_comment_count', { post_row_id: data.postId }) })
+    .eq('id', data.postId);
+
+  if (updateError) console.warn("Failed to increment comment count:", updateError);
 
   return comment as ForumComment;
 };

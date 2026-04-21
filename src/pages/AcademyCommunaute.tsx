@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users, MessageSquare, Network, PlusCircle, LogIn, Hash,
-  UserCircle2, Loader2, Search, RefreshCw, X, AlertCircle,
+  UserCircle2, Loader2, Search, RefreshCw, X, AlertCircle, Crown,
 } from "lucide-react";
 import {
   fetchSpaces, createSpace, toggleMember,
@@ -29,7 +29,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 const EMOJIS = ["💬", "📚", "🤝", "🧠", "⚡", "🎯", "🌍", "🚀", "💡", "🎓"];
 
-const POLL_MS = 15_000; // Reduced polling frequency for Supabase
+const POLL_MS = 15_000;
 
 export default function AcademyCommunaute() {
   const [spaces, setSpaces] = useState<ForumSpace[]>([]);
@@ -62,7 +62,7 @@ export default function AcademyCommunaute() {
       const data = await fetchSpaces();
       setSpaces(data);
     } catch (e) {
-      if (!silent) setError("Communauté en cours d’activation. Revenez très bientôt !");
+      if (!silent) setError("Impossible de charger les espaces. Veuillez réessayer.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -83,7 +83,7 @@ export default function AcademyCommunaute() {
 
   function handleSetUser() {
     if (!nameInput.trim()) return;
-    const u = setForumUser(nameInput);
+    const u = setForumUser(nameInput, true);
     setUser(u);
     setShowUserDialog(false);
     setNameInput("");
@@ -127,7 +127,7 @@ export default function AcademyCommunaute() {
       await loadSpaces(true);
       setNewName(""); setNewDesc(""); setNewEmoji("💬"); setNewCategory("echange");
       setShowSpaceDialog(false);
-    } catch {
+    } catch (e) {
       setError("Erreur lors de la création de l'espace. Veuillez réessayer.");
     } finally {
       setSaving(false);
@@ -148,20 +148,25 @@ export default function AcademyCommunaute() {
       <div className="container mx-auto px-6 md:px-12 max-w-6xl">
 
         <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="max-w-3xl mx-auto text-center mb-14">
+          <motion.div variants={fadeUp} className="flex items-center justify-center gap-2 mb-4">
+            <Crown size={28} className="text-amber-500" />
+            <span className="text-sm font-semibold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">Premium Community</span>
+          </motion.div>
           <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl font-serif font-medium mb-4">
-            La <span className="italic text-primary">Communauté</span>
+            La <span className="italic text-primary">Communauté</span> Premium
           </motion.h1>
           <motion.p variants={fadeUp} className="text-lg text-muted-foreground mb-8">
-            Rejoignez des espaces d'échanges, clubs et réseaux. Participez, répondez, créez.
+            Créez et gérez des espaces d'échanges, clubs et réseaux. Participez, commentez, aimez et construisez ensemble.
           </motion.p>
 
           <motion.div variants={fadeUp} className="flex items-center justify-center gap-3 flex-wrap">
             {user ? (
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-sm font-medium text-primary">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/30 text-sm font-medium text-primary">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground text-xs font-bold">
                   {initials(user.name)}
                 </span>
                 {user.name}
+                {user.isPremium && <Crown size={14} className="text-amber-500 ml-1" />}
               </div>
             ) : (
               <button
@@ -169,10 +174,10 @@ export default function AcademyCommunaute() {
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/60 border border-border/60 hover:border-primary/40 text-sm text-muted-foreground hover:text-primary transition-all duration-200"
               >
                 <UserCircle2 size={16} />
-                Définir mon pseudo
+                Rejoindre la communauté
               </button>
             )}
-            <Button size="sm" onClick={() => requireUser(() => setShowSpaceDialog(true))} className="gap-2">
+            <Button size="sm" onClick={() => requireUser(() => setShowSpaceDialog(true))} className="gap-2 bg-gradient-to-r from-primary to-secondary hover:opacity-90">
               <PlusCircle size={15} />
               Créer un espace
             </Button>
@@ -260,18 +265,24 @@ export default function AcademyCommunaute() {
             {filtered.map((space, i) => {
               const isMember = user ? space.members.includes(user.id) : false;
               const isJoining = joiningId === space.id;
+              const isAuthor = user?.id === space.author_id;
               return (
                 <motion.div
                   key={space.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="group relative flex flex-col p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300"
+                  className="group relative flex flex-col p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300"
                 >
                   <span className="absolute top-4 right-4 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground border border-border/50 rounded-full px-2 py-0.5 bg-background/60">
                     {CATEGORY_ICONS[space.category]}
                     {CATEGORY_LABELS[space.category]}
                   </span>
+                  {isAuthor && (
+                    <span className="absolute top-4 left-4 flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 rounded-full px-2 py-0.5">
+                      <Crown size={10} /> Créateur
+                    </span>
+                  )}
                   <div className="text-4xl mb-3 select-none">{space.emoji}</div>
                   <h3 className="font-serif text-lg font-semibold mb-2 pr-16 leading-snug">{space.name}</h3>
                   <p className="text-sm text-muted-foreground mb-4 flex-1 leading-relaxed">{space.description}</p>
@@ -307,7 +318,10 @@ export default function AcademyCommunaute() {
       {/* Dialog: pseudo */}
       <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle className="font-serif">Qui êtes-vous ?</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-serif flex items-center gap-2">
+            <Crown size={20} className="text-amber-500" />
+            Rejoindre la Communauté Premium
+          </DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">Choisissez un pseudo visible par toute la communauté.</p>
           <Input
             placeholder="Votre pseudo (ex : Amara K.)"
@@ -316,42 +330,45 @@ export default function AcademyCommunaute() {
             onKeyDown={e => e.key === "Enter" && handleSetUser()}
             autoFocus
           />
-          <Button onClick={handleSetUser} disabled={!nameInput.trim()} className="w-full">Confirmer</Button>
+          <Button onClick={handleSetUser} disabled={!nameInput.trim()} className="w-full bg-gradient-to-r from-primary to-secondary">Confirmer</Button>
         </DialogContent>
       </Dialog>
 
       {/* Dialog: créer espace */}
       <Dialog open={showSpaceDialog} onOpenChange={setShowSpaceDialog}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle className="font-serif">Créer un espace</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-serif flex items-center gap-2">
+            <PlusCircle size={20} className="text-primary" />
+            Créer un nouvel espace
+          </DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <p className="text-xs text-muted-foreground mb-2">Icône</p>
+              <p className="text-xs text-muted-foreground mb-2 font-semibold">Icône</p>
               <div className="flex flex-wrap gap-2">
                 {EMOJIS.map(e => (
                   <button
                     key={e}
                     onClick={() => setNewEmoji(e)}
-                    className={`text-xl p-1.5 rounded-lg border transition-all ${newEmoji === e ? "border-primary bg-primary/10" : "border-border/40 hover:border-border"}`}
+                    className={`text-xl p-1.5 rounded-lg border transition-all ${newEmoji === e ? "border-primary bg-gradient-to-br from-primary/10 to-secondary/10 scale-110" : "border-border/40 hover:border-border"}`}
                   >{e}</button>
                 ))}
               </div>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-2">Type</p>
+              <p className="text-xs text-muted-foreground mb-2 font-semibold">Type d'espace</p>
               <div className="flex gap-2">
                 {(["echange", "club", "reseau"] as const).map(cat => (
                   <button
                     key={cat}
                     onClick={() => setNewCategory(cat)}
-                    className={`flex-1 text-xs font-semibold py-2 rounded-lg border transition-all ${newCategory === cat ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground hover:border-border"}`}
+                    className={`flex-1 text-xs font-semibold py-2 rounded-lg border transition-all ${newCategory === cat ? "border-primary bg-gradient-to-r from-primary/10 to-secondary/10 text-primary" : "border-border/40 text-muted-foreground hover:border-border"}`}
                   >{CATEGORY_LABELS[cat]}</button>
                 ))}
               </div>
             </div>
             <Input placeholder="Nom de l'espace" value={newName} onChange={e => setNewName(e.target.value)} maxLength={50} autoFocus />
             <Textarea placeholder="Description (optionnel)" value={newDesc} onChange={e => setNewDesc(e.target.value)} rows={2} maxLength={150} />
-            <Button onClick={submitSpace} disabled={!newName.trim() || saving} className="w-full">
+            <Button onClick={submitSpace} disabled={!newName.trim() || saving} className="w-full bg-gradient-to-r from-primary to-secondary">
               {saving ? <Loader2 className="animate-spin" size={16} /> : "Créer l'espace"}
             </Button>
           </div>

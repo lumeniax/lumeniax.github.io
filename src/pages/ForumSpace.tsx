@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Heart, MessageSquare, PlusCircle, Users, ArrowRight,
-  UserCircle2, Loader2, RefreshCw, AlertCircle,
+  UserCircle2, Loader2, RefreshCw, AlertCircle, Crown,
 } from "lucide-react";
 import {
   fetchPosts, fetchSpaces, createPost, togglePostLike, toggleMember,
@@ -57,7 +57,7 @@ export default function ForumSpace() {
       setSpace(currentSpace);
       setPosts(postsData);
     } catch (e) {
-      if (!silent) setError("Communauté en cours d’activation. Revenez très bientôt !");
+      if (!silent) setError("Impossible de charger l'espace. Veuillez réessayer.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -78,7 +78,7 @@ export default function ForumSpace() {
 
   function handleSetUser() {
     if (!nameInput.trim()) return;
-    const u = setForumUser(nameInput);
+    const u = setForumUser(nameInput, true);
     setUser(u);
     setShowUserDialog(false);
     setNameInput("");
@@ -139,7 +139,7 @@ export default function ForumSpace() {
       setSpace(prev => prev ? { ...prev, post_count: prev.post_count + 1 } : prev);
       setPostTitle(""); setPostBody("");
       setShowPostDialog(false);
-    } catch {
+    } catch (e) {
       setError("Erreur lors de la publication. Veuillez réessayer.");
     } finally {
       setSaving(false);
@@ -182,18 +182,22 @@ export default function ForumSpace() {
   }
 
   const isMember = user ? space.members.includes(user.id) : false;
+  const isAuthor = user?.id === space.author_id;
 
   return (
     <div className="w-full pt-32 pb-24">
       <div className="container mx-auto px-6 md:px-12 max-w-4xl">
 
         {/* Space header */}
-        <motion.div initial="hidden" animate="visible" variants={fadeUp} className="mb-10 p-8 rounded-2xl border border-border/50 bg-card">
+        <motion.div initial="hidden" animate="visible" variants={fadeUp} className="mb-10 p-8 rounded-2xl border border-border/50 bg-gradient-to-br from-card to-card/80">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
               <span className="text-5xl select-none">{space.emoji}</span>
               <div>
-                <h1 className="text-3xl font-serif font-medium">{space.name}</h1>
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-3xl font-serif font-medium">{space.name}</h1>
+                  {isAuthor && <Crown size={24} className="text-amber-500" />}
+                </div>
                 <p className="text-muted-foreground mt-1 max-w-lg">{space.description}</p>
               </div>
             </div>
@@ -221,12 +225,13 @@ export default function ForumSpace() {
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           {user ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold">{initials(user.name)}</span>
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground text-xs font-bold">{initials(user.name)}</span>
               Connecté en tant que <span className="font-semibold text-foreground">{user.name}</span>
+              {user.isPremium && <Crown size={14} className="text-amber-500 ml-1" />}
             </div>
           ) : (
             <button onClick={() => setShowUserDialog(true)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
-              <UserCircle2 size={16} />Définir mon pseudo pour participer
+              <UserCircle2 size={16} />Rejoindre pour participer
             </button>
           )}
           <div className="flex items-center gap-2">
@@ -238,7 +243,7 @@ export default function ForumSpace() {
             >
               <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
             </button>
-            <Button onClick={() => requireUser(() => setShowPostDialog(true))} className="gap-2">
+            <Button onClick={() => requireUser(() => setShowPostDialog(true))} className="gap-2 bg-gradient-to-r from-primary to-secondary">
               <PlusCircle size={15} />Nouveau post
             </Button>
           </div>
@@ -267,10 +272,10 @@ export default function ForumSpace() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
-                className="p-6 rounded-2xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-md hover:shadow-primary/5 transition-all duration-300"
+                className="p-6 rounded-2xl border border-border/50 bg-gradient-to-br from-card to-card/80 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5 transition-all duration-300"
               >
                 <div className="flex items-start gap-4">
-                  <span className="flex-none flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 text-primary text-sm font-bold mt-0.5">
+                  <span className="flex-none flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 text-primary text-sm font-bold mt-0.5">
                     {initials(post.author_name)}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -308,7 +313,10 @@ export default function ForumSpace() {
       {/* Dialog: pseudo */}
       <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle className="font-serif">Qui êtes-vous ?</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-serif flex items-center gap-2">
+            <Crown size={20} className="text-amber-500" />
+            Rejoindre
+          </DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">Choisissez un pseudo visible par toute la communauté.</p>
           <Input
             placeholder="Votre pseudo (ex : Amara K.)"
@@ -317,18 +325,21 @@ export default function ForumSpace() {
             onKeyDown={e => e.key === "Enter" && handleSetUser()}
             autoFocus
           />
-          <Button onClick={handleSetUser} disabled={!nameInput.trim()} className="w-full">Confirmer</Button>
+          <Button onClick={handleSetUser} disabled={!nameInput.trim()} className="w-full bg-gradient-to-r from-primary to-secondary">Confirmer</Button>
         </DialogContent>
       </Dialog>
 
       {/* Dialog: nouveau post */}
       <Dialog open={showPostDialog} onOpenChange={setShowPostDialog}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle className="font-serif">Nouveau post</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-serif flex items-center gap-2">
+            <PlusCircle size={20} className="text-primary" />
+            Nouveau post
+          </DialogTitle></DialogHeader>
           <div className="space-y-4">
             <Input placeholder="Titre du post" value={postTitle} onChange={e => setPostTitle(e.target.value)} maxLength={120} autoFocus />
             <Textarea placeholder="Développez votre idée, question ou partage…" value={postBody} onChange={e => setPostBody(e.target.value)} rows={5} maxLength={2000} />
-            <Button onClick={submitPost} disabled={!postTitle.trim() || saving} className="w-full">
+            <Button onClick={submitPost} disabled={!postTitle.trim() || saving} className="w-full bg-gradient-to-r from-primary to-secondary">
               {saving ? <Loader2 className="animate-spin" size={16} /> : "Publier"}
             </Button>
           </div>
