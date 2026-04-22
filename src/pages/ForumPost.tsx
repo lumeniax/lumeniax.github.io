@@ -102,9 +102,15 @@ export default function ForumPost() {
 
         const reps = await fetchReplies(postId);
         setReplies(reps);
-      } catch (e) {
-        if (!silent)
-          console.error("loadPost failed");
+      } catch (e: any) {
+        if (!silent) {
+          console.error("loadPost failed:", e);
+          if (e.message === "COMMUNITY_UNAVAILABLE") {
+            setError("COMMUNITY_UNAVAILABLE");
+          } else {
+            setError("Impossible de charger le post. Veuillez réessayer.");
+          }
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -360,6 +366,31 @@ export default function ForumPost() {
               <Skeleton key={i} className="h-24 w-full rounded-2xl" />
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error === "COMMUNITY_UNAVAILABLE") {
+    return (
+      <div className="w-full pt-40 pb-20 text-center px-6">
+        <div className="max-w-md mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mx-auto mb-6">
+            <MessageSquare size={32} />
+          </div>
+          <h2 className="text-2xl md:text-3xl font-serif font-medium mb-4">
+            Contenu en cours d'activation
+          </h2>
+          <p className="text-muted-foreground mb-8">
+            Les discussions de la communauté sont en cours de préparation. 
+            Revenez très bientôt pour consulter ce post et participer.
+          </p>
+          <Link href={`/academy/communaute/${spaceId}`}>
+            <Button variant="outline" className="gap-2">
+              <ArrowLeft size={16} />
+              Retour à l'espace
+            </Button>
+          </Link>
         </div>
       </div>
     );

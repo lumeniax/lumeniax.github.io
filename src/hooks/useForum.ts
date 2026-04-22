@@ -60,19 +60,27 @@ async function api<T>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const res = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-  if (!res.ok) {
-    let msg = `HTTP ${res.status}`;
-    try {
-      const j = await res.json();
-      if (j?.error) msg = j.error;
-    } catch {}
-    throw new Error(msg);
+  try {
+    const res = await fetch(url, {
+      headers: { "Content-Type": "application/json" },
+      ...options,
+    });
+    if (!res.ok) {
+      let msg = `HTTP ${res.status}`;
+      try {
+        const j = await res.json();
+        if (j?.error) msg = j.error;
+      } catch {}
+      throw new Error(msg);
+    }
+    return (await res.json()) as T;
+  } catch (e: any) {
+    // On GitHub Pages, /api/* will 404. We catch this to provide a clean "Coming Soon" state.
+    if (e.message.includes("HTTP 404") || e.name === "TypeError") {
+      throw new Error("COMMUNITY_UNAVAILABLE");
+    }
+    throw e;
   }
-  return (await res.json()) as T;
 }
 
 // ─── User identity (localStorage only) ───────────────────────────────────────

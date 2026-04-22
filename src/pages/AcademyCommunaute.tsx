@@ -95,8 +95,13 @@ export default function AcademyCommunaute() {
     try {
       const data = await fetchSpaces();
       setSpaces(data);
-    } catch (e) {
+    } catch (e: any) {
       console.error("loadSpaces failed:", e);
+      if (e.message === "COMMUNITY_UNAVAILABLE") {
+        setError("COMMUNITY_UNAVAILABLE");
+      } else {
+        setError("Impossible de charger les espaces. Veuillez réessayer.");
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -469,6 +474,23 @@ export default function AcademyCommunaute() {
                 </div>
               </div>
             ))}
+          </div>
+        ) : error === "COMMUNITY_UNAVAILABLE" ? (
+          <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-gradient-to-b from-primary/5 to-transparent rounded-3xl border border-primary/10">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6">
+              <Sparkles size={32} />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-serif font-medium mb-4">
+              Communauté en cours d'activation
+            </h2>
+            <p className="text-muted-foreground max-w-md mx-auto mb-8">
+              Nous préparons un espace d'échange exclusif pour nos membres. 
+              Cette fonctionnalité sera disponible très prochainement.
+            </p>
+            <div className="flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 px-4 py-2 rounded-full">
+              <Loader2 size={14} className="animate-spin" />
+              Déploiement en cours...
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
