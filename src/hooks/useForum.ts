@@ -1,10 +1,36 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// useForum — 100% LOCAL (localStorage). No Supabase, no API, no backend.
+// useForum — Firestore (Firebase) + temps réel via onSnapshot
 //
-// Toutes les fonctions conservent leur signature historique (Promise<T>) afin
-// que les pages existantes (AcademyCommunaute, ForumSpace, ForumPost) continuent
-// de fonctionner sans modification.
+// Toutes les données partagées (espaces, posts, commentaires, réponses) sont
+// stockées et synchronisées via Firestore. Chaque page peut s'abonner avec
+// `subscribe*` pour recevoir les mises à jour en temps réel.
+//
+// L'identité locale du visiteur (pseudo + favoris) reste dans sessionStorage —
+// c'est une préférence purement personnelle au navigateur, sans contrepartie
+// Firestore (pas d'authentification).
 // ─────────────────────────────────────────────────────────────────────────────
+
+import { db } from "@/firebase";
+import {
+  collection,
+  doc,
+  addDoc,
+  getDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+  arrayUnion,
+  arrayRemove,
+  increment,
+  type DocumentData,
+  type QueryDocumentSnapshot,
+  type Unsubscribe,
+} from "firebase/firestore";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,14 +88,10 @@ export interface ForumReply {
   likes: string[];
 }
 
-// ─── localStorage helpers ────────────────────────────────────────────────────
+// ─── Identity (sessionStorage, sans backend auth) ────────────────────────────
 
 const USER_KEY = "lx_forum_user";
 const FAVORITES_KEY = "lx_forum_favorites";
-const SPACES_KEY = "lx_forum_spaces";
-const POSTS_KEY = "lx_forum_posts";
-const COMMENTS_KEY = "lx_forum_comments";
-const REPLIES_KEY = "lx_forum_replies";
 
 function uid(): string {
   return Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
@@ -77,33 +99,18 @@ function uid(): string {
 
 function safeGet(key: string): string | null {
   try {
-    return localStorage.getItem(key);
+    return sessionStorage.getItem(key);
   } catch {
     return null;
   }
 }
 function safeSet(key: string, value: string) {
   try {
-    localStorage.setItem(key, value);
+    sessionStorage.setItem(key, value);
   } catch {
-    /* localStorage may be blocked (iframe, private mode) — ignore */
+    /* ignore */
   }
 }
-
-function read<T>(key: string, fallback: T): T {
-  const raw = safeGet(key);
-  if (!raw) return fallback;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-function write<T>(key: string, value: T) {
-  safeSet(key, JSON.stringify(value));
-}
-
-// ─── User identity ───────────────────────────────────────────────────────────
 
 let _user: ForumUser | null = null;
 let _favorites: string[] | null = null;
@@ -116,7 +123,7 @@ export function getForumUser(): ForumUser | null {
       _user = JSON.parse(raw) as ForumUser;
       return _user;
     } catch {
-      /* fallthrough */
+      /* fall through */
     }
   }
   return null;
@@ -138,7 +145,7 @@ export function getFavoriteSpaces(): string[] {
       _favorites = JSON.parse(raw) as string[];
       return _favorites;
     } catch {
-      /* fallthrough */
+      /* fall through */
     }
   }
   _favorites = [];
@@ -155,90 +162,154 @@ export function toggleFavoriteSpace(spaceId: string): boolean {
   return next.includes(spaceId);
 }
 
-// ─── Internal stores (synchronous reads from localStorage) ───────────────────
+// ─── Firestore helpers ───────────────────────────────────────────────────────
 
-function loadSpaces(): ForumSpace[] {
-  return read<ForumSpace[]>(SPACES_KEY, []);
-}
-function saveSpaces(list: ForumSpace[]) {
-  write(SPACES_KEY, list);
-}
-function loadPosts(): ForumPost[] {
-  return read<ForumPost[]>(POSTS_KEY, []);
-}
-function savePosts(list: ForumPost[]) {
-  write(POSTS_KEY, list);
-}
-function loadComments(): ForumComment[] {
-  return read<ForumComment[]>(COMMENTS_KEY, []);
-}
-function saveComments(list: ForumComment[]) {
-  write(COMMENTS_KEY, list);
-}
-function loadReplies(): ForumReply[] {
-  return read<ForumReply[]>(REPLIES_KEY, []);
-}
-function saveReplies(list: ForumReply[]) {
-  write(REPLIES_KEY, list);
+const SPACES = "spaces";
+const POSTS = "posts";
+const COMMENTS = "comments";
+const REPLIES = "replies";
+
+function tsToIso(value: unknown): string {
+  if (!value) return new Date().toISOString();
+  // Firestore Timestamp
+  if (typeof value === "object" && value !== null && "toDate" in value) {
+    try {
+      return (value as { toDate: () => Date }).toDate().toISOString();
+    } catch {
+      return new Date().toISOString();
+    }
+  }
+  if (typeof value === "string") return value;
+  if (value instanceof Date) return value.toISOString();
+  return new Date().toISOString();
 }
 
-// ─── Spaces : CRUD complet exposé ────────────────────────────────────────────
-
-export function getSpaces(): ForumSpace[] {
-  return loadSpaces();
+function mapSpace(d: QueryDocumentSnapshot<DocumentData>): ForumSpace {
+  const data = d.data();
+  const members: string[] = Array.isArray(data.members) ? data.members : [];
+  return {
+    id: d.id,
+    name: data.name ?? "",
+    description: data.description ?? "",
+    emoji: data.emoji ?? "💬",
+    category: (data.category as ForumSpace["category"]) ?? "echange",
+    created_at: tsToIso(data.created_at ?? data.createdAt),
+    author_id: data.author_id,
+    author_name: data.author_name,
+    members,
+    member_count:
+      typeof data.member_count === "number" ? data.member_count : members.length,
+    post_count: typeof data.post_count === "number" ? data.post_count : 0,
+  };
 }
 
-export function deleteSpace(id: string): void {
-  console.log("[useForum] deleteSpace", id);
-  saveSpaces(loadSpaces().filter((s) => s.id !== id));
-  // Cascade : supprimer posts, commentaires et réponses liés
-  const remainingPosts = loadPosts().filter((p) => p.space_id !== id);
-  const removedPostIds = new Set(
-    loadPosts().filter((p) => p.space_id === id).map((p) => p.id)
-  );
-  savePosts(remainingPosts);
-  const remainingComments = loadComments().filter(
-    (c) => !removedPostIds.has(c.post_id)
-  );
-  const removedCommentIds = new Set(
-    loadComments()
-      .filter((c) => removedPostIds.has(c.post_id))
-      .map((c) => c.id)
-  );
-  saveComments(remainingComments);
-  saveReplies(
-    loadReplies().filter((r) => !removedCommentIds.has(r.comment_id))
-  );
+function mapPost(d: QueryDocumentSnapshot<DocumentData>): ForumPost {
+  const data = d.data();
+  const likes: string[] = Array.isArray(data.likes) ? data.likes : [];
+  return {
+    id: d.id,
+    space_id: data.space_id ?? "",
+    title: data.title ?? "",
+    body: data.body ?? "",
+    author_id: data.author_id ?? "",
+    author_name: data.author_name ?? "",
+    created_at: tsToIso(data.created_at ?? data.createdAt),
+    likes,
+    like_count:
+      typeof data.like_count === "number" ? data.like_count : likes.length,
+    comment_count:
+      typeof data.comment_count === "number" ? data.comment_count : 0,
+  };
 }
 
-export function updateSpace(
-  id: string,
-  data: Partial<Pick<ForumSpace, "name" | "description" | "emoji" | "category">>
-): ForumSpace | null {
-  console.log("[useForum] updateSpace", id, data);
-  const list = loadSpaces();
-  const idx = list.findIndex((s) => s.id === id);
-  if (idx === -1) return null;
-  list[idx] = { ...list[idx], ...data };
-  saveSpaces(list);
-  return list[idx];
+function mapComment(d: QueryDocumentSnapshot<DocumentData>): ForumComment {
+  const data = d.data();
+  const likes: string[] = Array.isArray(data.likes) ? data.likes : [];
+  return {
+    id: d.id,
+    post_id: data.post_id ?? "",
+    body: data.body ?? "",
+    author_id: data.author_id ?? "",
+    author_name: data.author_name ?? "",
+    created_at: tsToIso(data.created_at ?? data.createdAt),
+    likes,
+    like_count:
+      typeof data.like_count === "number" ? data.like_count : likes.length,
+  };
 }
 
-// ─── Spaces : signatures historiques (Promise) ──────────────────────────────
+function mapReply(d: QueryDocumentSnapshot<DocumentData>): ForumReply {
+  const data = d.data();
+  const likes: string[] = Array.isArray(data.likes) ? data.likes : [];
+  return {
+    id: d.id,
+    comment_id: data.comment_id ?? "",
+    body: data.body ?? "",
+    author_id: data.author_id ?? "",
+    author_name: data.author_name ?? "",
+    created_at: tsToIso(data.created_at ?? data.createdAt),
+    likes,
+    like_count:
+      typeof data.like_count === "number" ? data.like_count : likes.length,
+  };
+}
+
+// ─── Spaces ───────────────────────────────────────────────────────────────────
 
 export const fetchSpaces = async (): Promise<ForumSpace[]> => {
-  const data = loadSpaces();
-  console.log("[useForum] fetchSpaces →", data.length, "espaces");
-  return data;
+  try {
+    const snap = await getDocs(
+      query(collection(db, SPACES), orderBy("created_at", "desc"))
+    );
+    const list = snap.docs.map(mapSpace);
+    console.log("[useForum] fetchSpaces →", list.length);
+    return list;
+  } catch (e) {
+    console.error("[useForum] fetchSpaces ÉCHEC:", e);
+    return [];
+  }
 };
+
+export function subscribeSpaces(
+  cb: (spaces: ForumSpace[]) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  const q = query(collection(db, SPACES), orderBy("created_at", "desc"));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const list = snap.docs.map(mapSpace);
+      console.log("[useForum] subscribeSpaces tick →", list.length);
+      cb(list);
+    },
+    (err) => {
+      console.error("[useForum] subscribeSpaces ÉCHEC:", err);
+      onError?.(err);
+    }
+  );
+}
 
 export const createSpace = async (
   data: Pick<ForumSpace, "name" | "description" | "emoji" | "category">,
   author: ForumUser
 ): Promise<ForumSpace> => {
   console.log("[useForum] createSpace", data, "par", author.name);
-  const space: ForumSpace = {
-    id: uid(),
+  const payload = {
+    name: data.name,
+    description: data.description,
+    emoji: data.emoji,
+    category: data.category,
+    created_at: serverTimestamp(),
+    author_id: author.id,
+    author_name: author.name,
+    members: [author.id],
+    member_count: 1,
+    post_count: 0,
+  };
+  const ref = await addDoc(collection(db, SPACES), payload);
+  console.log("[useForum] espace créé:", ref.id);
+  return {
+    id: ref.id,
     name: data.name,
     description: data.description,
     emoji: data.emoji,
@@ -246,98 +317,165 @@ export const createSpace = async (
     created_at: new Date().toISOString(),
     author_id: author.id,
     author_name: author.name,
+    members: [author.id],
     member_count: 1,
     post_count: 0,
-    members: [author.id],
   };
-  const list = loadSpaces();
-  list.unshift(space);
-  saveSpaces(list);
-  console.log("[useForum] espace créé:", space.id);
-  return space;
+};
+
+export const updateSpace = async (
+  id: string,
+  data: Partial<Pick<ForumSpace, "name" | "description" | "emoji" | "category">>
+): Promise<void> => {
+  console.log("[useForum] updateSpace", id, data);
+  await updateDoc(doc(db, SPACES, id), data as DocumentData);
+};
+
+export const deleteSpace = async (id: string): Promise<void> => {
+  console.log("[useForum] deleteSpace", id);
+  // Cascade : supprimer posts → commentaires → réponses liés
+  const postsSnap = await getDocs(
+    query(collection(db, POSTS), where("space_id", "==", id))
+  );
+  for (const p of postsSnap.docs) {
+    const cmtsSnap = await getDocs(
+      query(collection(db, COMMENTS), where("post_id", "==", p.id))
+    );
+    for (const c of cmtsSnap.docs) {
+      const repsSnap = await getDocs(
+        query(collection(db, REPLIES), where("comment_id", "==", c.id))
+      );
+      for (const r of repsSnap.docs) await deleteDoc(r.ref);
+      await deleteDoc(c.ref);
+    }
+    await deleteDoc(p.ref);
+  }
+  await deleteDoc(doc(db, SPACES, id));
 };
 
 export const toggleMember = async (
   spaceId: string,
   userId: string
 ): Promise<{ joined: boolean }> => {
-  const list = loadSpaces();
-  const idx = list.findIndex((s) => s.id === spaceId);
-  if (idx === -1) return { joined: false };
-  const isMember = list[idx].members.includes(userId);
-  const members = isMember
-    ? list[idx].members.filter((id) => id !== userId)
-    : [...list[idx].members, userId];
-  list[idx] = {
-    ...list[idx],
-    members,
-    member_count: members.length,
-  };
-  saveSpaces(list);
+  const ref = doc(db, SPACES, spaceId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return { joined: false };
+  const data = snap.data();
+  const members: string[] = Array.isArray(data.members) ? data.members : [];
+  const isMember = members.includes(userId);
+  if (isMember) {
+    await updateDoc(ref, {
+      members: arrayRemove(userId),
+      member_count: increment(-1),
+    });
+  } else {
+    await updateDoc(ref, {
+      members: arrayUnion(userId),
+      member_count: increment(1),
+    });
+  }
   return { joined: !isMember };
 };
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
 
-function recountSpacePosts(spaceId: string) {
-  const posts = loadPosts().filter((p) => p.space_id === spaceId);
-  const list = loadSpaces();
-  const idx = list.findIndex((s) => s.id === spaceId);
-  if (idx !== -1) {
-    list[idx] = { ...list[idx], post_count: posts.length };
-    saveSpaces(list);
-  }
-}
-
-function recountPostComments(postId: string) {
-  const count = loadComments().filter((c) => c.post_id === postId).length;
-  const list = loadPosts();
-  const idx = list.findIndex((p) => p.id === postId);
-  if (idx !== -1) {
-    list[idx] = { ...list[idx], comment_count: count };
-    savePosts(list);
-  }
-}
-
 export const fetchPosts = async (spaceId: string): Promise<ForumPost[]> => {
-  const data = loadPosts()
-    .filter((p) => p.space_id === spaceId)
-    .sort(
+  try {
+    const snap = await getDocs(
+      query(collection(db, POSTS), where("space_id", "==", spaceId))
+    );
+    const list = snap.docs.map(mapPost).sort(
       (a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-  console.log("[useForum] fetchPosts(", spaceId, ") →", data.length);
-  return data;
+    return list;
+  } catch (e) {
+    console.error("[useForum] fetchPosts ÉCHEC:", e);
+    return [];
+  }
 };
 
+export function subscribePosts(
+  spaceId: string,
+  cb: (posts: ForumPost[]) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  const q = query(collection(db, POSTS), where("space_id", "==", spaceId));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const list = snap.docs.map(mapPost).sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      cb(list);
+    },
+    (err) => {
+      console.error("[useForum] subscribePosts ÉCHEC:", err);
+      onError?.(err);
+    }
+  );
+}
+
 export const fetchPost = async (postId: string): Promise<ForumPost> => {
-  const post = loadPosts().find((p) => p.id === postId);
-  if (!post) throw new Error("Post introuvable");
-  return post;
+  const snap = await getDoc(doc(db, POSTS, postId));
+  if (!snap.exists()) throw new Error("Post introuvable");
+  return mapPost(snap as unknown as QueryDocumentSnapshot<DocumentData>);
 };
+
+export function subscribePost(
+  postId: string,
+  cb: (post: ForumPost | null) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  return onSnapshot(
+    doc(db, POSTS, postId),
+    (snap) => {
+      if (!snap.exists()) return cb(null);
+      cb(mapPost(snap as unknown as QueryDocumentSnapshot<DocumentData>));
+    },
+    (err) => {
+      console.error("[useForum] subscribePost ÉCHEC:", err);
+      onError?.(err);
+    }
+  );
+}
 
 export const createPost = async (
   data: { spaceId: string; title: string; body: string },
   author: ForumUser
 ): Promise<ForumPost> => {
   console.log("[useForum] createPost", data);
-  const post: ForumPost = {
-    id: uid(),
+  const payload = {
+    space_id: data.spaceId,
+    title: data.title,
+    body: data.body,
+    author_id: author.id,
+    author_name: author.name,
+    created_at: serverTimestamp(),
+    likes: [] as string[],
+    like_count: 0,
+    comment_count: 0,
+  };
+  const ref = await addDoc(collection(db, POSTS), payload);
+  // Compteur dénormalisé sur l'espace
+  await updateDoc(doc(db, SPACES, data.spaceId), {
+    post_count: increment(1),
+  }).catch((e) =>
+    console.error("[useForum] increment post_count ÉCHEC:", e)
+  );
+  return {
+    id: ref.id,
     space_id: data.spaceId,
     title: data.title,
     body: data.body,
     author_id: author.id,
     author_name: author.name,
     created_at: new Date().toISOString(),
+    likes: [],
     like_count: 0,
     comment_count: 0,
-    likes: [],
   };
-  const list = loadPosts();
-  list.unshift(post);
-  savePosts(list);
-  recountSpacePosts(data.spaceId);
-  return post;
 };
 
 export const updatePost = async (
@@ -345,48 +483,55 @@ export const updatePost = async (
   data: { title: string; body: string },
   user: ForumUser
 ): Promise<void> => {
-  const list = loadPosts();
-  const idx = list.findIndex((p) => p.id === postId);
-  if (idx === -1) throw new Error("Post introuvable");
-  if (list[idx].author_id !== user.id)
+  const ref = doc(db, POSTS, postId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("Post introuvable");
+  if (snap.data().author_id !== user.id)
     throw new Error("Action non autorisée");
-  list[idx] = { ...list[idx], title: data.title, body: data.body };
-  savePosts(list);
+  await updateDoc(ref, { title: data.title, body: data.body });
 };
 
 export const deletePost = async (
   postId: string,
   user: ForumUser
 ): Promise<void> => {
-  const list = loadPosts();
-  const target = list.find((p) => p.id === postId);
-  if (!target) return;
-  if (target.author_id !== user.id) throw new Error("Action non autorisée");
-  savePosts(list.filter((p) => p.id !== postId));
-  // Cascade : supprimer commentaires + réponses
-  const cmtIds = new Set(
-    loadComments().filter((c) => c.post_id === postId).map((c) => c.id)
+  const ref = doc(db, POSTS, postId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const data = snap.data();
+  if (data.author_id !== user.id) throw new Error("Action non autorisée");
+  // Cascade : commentaires + réponses
+  const cmtsSnap = await getDocs(
+    query(collection(db, COMMENTS), where("post_id", "==", postId))
   );
-  saveComments(loadComments().filter((c) => c.post_id !== postId));
-  saveReplies(
-    loadReplies().filter((r) => !cmtIds.has(r.comment_id))
-  );
-  recountSpacePosts(target.space_id);
+  for (const c of cmtsSnap.docs) {
+    const repsSnap = await getDocs(
+      query(collection(db, REPLIES), where("comment_id", "==", c.id))
+    );
+    for (const r of repsSnap.docs) await deleteDoc(r.ref);
+    await deleteDoc(c.ref);
+  }
+  await deleteDoc(ref);
+  if (data.space_id) {
+    await updateDoc(doc(db, SPACES, data.space_id), {
+      post_count: increment(-1),
+    }).catch(() => {});
+  }
 };
 
 export const togglePostLike = async (
   postId: string,
   userId: string
 ): Promise<{ liked: boolean }> => {
-  const list = loadPosts();
-  const idx = list.findIndex((p) => p.id === postId);
-  if (idx === -1) return { liked: false };
-  const hasLiked = list[idx].likes.includes(userId);
-  const likes = hasLiked
-    ? list[idx].likes.filter((id) => id !== userId)
-    : [...list[idx].likes, userId];
-  list[idx] = { ...list[idx], likes, like_count: likes.length };
-  savePosts(list);
+  const ref = doc(db, POSTS, postId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return { liked: false };
+  const likes: string[] = Array.isArray(snap.data().likes) ? snap.data().likes : [];
+  const hasLiked = likes.includes(userId);
+  await updateDoc(ref, {
+    likes: hasLiked ? arrayRemove(userId) : arrayUnion(userId),
+    like_count: increment(hasLiked ? -1 : 1),
+  });
   return { liked: !hasLiked };
 };
 
@@ -395,33 +540,69 @@ export const togglePostLike = async (
 export const fetchComments = async (
   postId: string
 ): Promise<ForumComment[]> => {
-  return loadComments()
-    .filter((c) => c.post_id === postId)
-    .sort(
+  try {
+    const snap = await getDocs(
+      query(collection(db, COMMENTS), where("post_id", "==", postId))
+    );
+    return snap.docs.map(mapComment).sort(
       (a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
+  } catch (e) {
+    console.error("[useForum] fetchComments ÉCHEC:", e);
+    return [];
+  }
 };
+
+export function subscribeComments(
+  postId: string,
+  cb: (comments: ForumComment[]) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  const q = query(collection(db, COMMENTS), where("post_id", "==", postId));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const list = snap.docs.map(mapComment).sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      cb(list);
+    },
+    (err) => {
+      console.error("[useForum] subscribeComments ÉCHEC:", err);
+      onError?.(err);
+    }
+  );
+}
 
 export const createComment = async (
   data: { postId: string; body: string },
   author: ForumUser
 ): Promise<ForumComment> => {
-  const cmt: ForumComment = {
-    id: uid(),
+  const payload = {
+    post_id: data.postId,
+    body: data.body,
+    author_id: author.id,
+    author_name: author.name,
+    created_at: serverTimestamp(),
+    likes: [] as string[],
+    like_count: 0,
+  };
+  const ref = await addDoc(collection(db, COMMENTS), payload);
+  await updateDoc(doc(db, POSTS, data.postId), {
+    comment_count: increment(1),
+  }).catch(() => {});
+  return {
+    id: ref.id,
     post_id: data.postId,
     body: data.body,
     author_id: author.id,
     author_name: author.name,
     created_at: new Date().toISOString(),
-    like_count: 0,
     likes: [],
+    like_count: 0,
   };
-  const list = loadComments();
-  list.push(cmt);
-  saveComments(list);
-  recountPostComments(data.postId);
-  return cmt;
 };
 
 export const updateComment = async (
@@ -429,102 +610,182 @@ export const updateComment = async (
   body: string,
   user: ForumUser
 ): Promise<void> => {
-  const list = loadComments();
-  const idx = list.findIndex((c) => c.id === commentId);
-  if (idx === -1) throw new Error("Commentaire introuvable");
-  if (list[idx].author_id !== user.id)
+  const ref = doc(db, COMMENTS, commentId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("Commentaire introuvable");
+  if (snap.data().author_id !== user.id)
     throw new Error("Action non autorisée");
-  list[idx] = { ...list[idx], body };
-  saveComments(list);
+  await updateDoc(ref, { body });
 };
 
 export const deleteComment = async (
   commentId: string,
   user: ForumUser
 ): Promise<void> => {
-  const list = loadComments();
-  const target = list.find((c) => c.id === commentId);
-  if (!target) return;
-  if (target.author_id !== user.id) throw new Error("Action non autorisée");
-  saveComments(list.filter((c) => c.id !== commentId));
-  saveReplies(loadReplies().filter((r) => r.comment_id !== commentId));
-  recountPostComments(target.post_id);
+  const ref = doc(db, COMMENTS, commentId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const data = snap.data();
+  if (data.author_id !== user.id) throw new Error("Action non autorisée");
+  const repsSnap = await getDocs(
+    query(collection(db, REPLIES), where("comment_id", "==", commentId))
+  );
+  for (const r of repsSnap.docs) await deleteDoc(r.ref);
+  await deleteDoc(ref);
+  if (data.post_id) {
+    await updateDoc(doc(db, POSTS, data.post_id), {
+      comment_count: increment(-1),
+    }).catch(() => {});
+  }
 };
 
 export const toggleCommentLike = async (
   commentId: string,
   userId: string
 ): Promise<{ liked: boolean }> => {
-  const list = loadComments();
-  const idx = list.findIndex((c) => c.id === commentId);
-  if (idx === -1) return { liked: false };
-  const hasLiked = list[idx].likes.includes(userId);
-  const likes = hasLiked
-    ? list[idx].likes.filter((id) => id !== userId)
-    : [...list[idx].likes, userId];
-  list[idx] = { ...list[idx], likes, like_count: likes.length };
-  saveComments(list);
+  const ref = doc(db, COMMENTS, commentId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return { liked: false };
+  const likes: string[] = Array.isArray(snap.data().likes) ? snap.data().likes : [];
+  const hasLiked = likes.includes(userId);
+  await updateDoc(ref, {
+    likes: hasLiked ? arrayRemove(userId) : arrayUnion(userId),
+    like_count: increment(hasLiked ? -1 : 1),
+  });
   return { liked: !hasLiked };
 };
 
 // ─── Replies ──────────────────────────────────────────────────────────────────
 
 export const fetchReplies = async (postId: string): Promise<ForumReply[]> => {
-  const cmtIds = new Set(
-    loadComments().filter((c) => c.post_id === postId).map((c) => c.id)
-  );
-  return loadReplies()
-    .filter((r) => cmtIds.has(r.comment_id))
-    .sort(
+  try {
+    const cmtsSnap = await getDocs(
+      query(collection(db, COMMENTS), where("post_id", "==", postId))
+    );
+    const cmtIds = cmtsSnap.docs.map((d) => d.id);
+    if (cmtIds.length === 0) return [];
+    // Firestore "in" supporte 30 valeurs max ; on chunke par sécurité
+    const chunks: string[][] = [];
+    for (let i = 0; i < cmtIds.length; i += 30) chunks.push(cmtIds.slice(i, i + 30));
+    const all: ForumReply[] = [];
+    for (const ch of chunks) {
+      const snap = await getDocs(
+        query(collection(db, REPLIES), where("comment_id", "in", ch))
+      );
+      all.push(...snap.docs.map(mapReply));
+    }
+    return all.sort(
       (a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
+  } catch (e) {
+    console.error("[useForum] fetchReplies ÉCHEC:", e);
+    return [];
+  }
 };
+
+export function subscribeReplies(
+  postId: string,
+  cb: (replies: ForumReply[]) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  // On s'abonne à la liste des commentaires, puis à toutes leurs réponses.
+  let inner: Unsubscribe | null = null;
+  const outer = onSnapshot(
+    query(collection(db, COMMENTS), where("post_id", "==", postId)),
+    (cmtSnap) => {
+      if (inner) {
+        inner();
+        inner = null;
+      }
+      const cmtIds = cmtSnap.docs.map((d) => d.id);
+      if (cmtIds.length === 0) {
+        cb([]);
+        return;
+      }
+      // Pour rester simple : 30 ids max ; pour plus, on retombe sur une lecture ponctuelle.
+      if (cmtIds.length <= 30) {
+        inner = onSnapshot(
+          query(collection(db, REPLIES), where("comment_id", "in", cmtIds)),
+          (rSnap) => {
+            const list = rSnap.docs.map(mapReply).sort(
+              (a, b) =>
+                new Date(a.created_at).getTime() -
+                new Date(b.created_at).getTime()
+            );
+            cb(list);
+          },
+          (err) => {
+            console.error("[useForum] subscribeReplies (inner) ÉCHEC:", err);
+            onError?.(err);
+          }
+        );
+      } else {
+        fetchReplies(postId).then(cb);
+      }
+    },
+    (err) => {
+      console.error("[useForum] subscribeReplies (outer) ÉCHEC:", err);
+      onError?.(err);
+    }
+  );
+  return () => {
+    if (inner) inner();
+    outer();
+  };
+}
 
 export const createReply = async (
   data: { commentId: string; body: string },
   author: ForumUser
 ): Promise<ForumReply> => {
-  const reply: ForumReply = {
-    id: uid(),
+  const payload = {
+    comment_id: data.commentId,
+    body: data.body,
+    author_id: author.id,
+    author_name: author.name,
+    created_at: serverTimestamp(),
+    likes: [] as string[],
+    like_count: 0,
+  };
+  const ref = await addDoc(collection(db, REPLIES), payload);
+  return {
+    id: ref.id,
     comment_id: data.commentId,
     body: data.body,
     author_id: author.id,
     author_name: author.name,
     created_at: new Date().toISOString(),
-    like_count: 0,
     likes: [],
+    like_count: 0,
   };
-  const list = loadReplies();
-  list.push(reply);
-  saveReplies(list);
-  return reply;
 };
 
 export const deleteReply = async (
   replyId: string,
   user: ForumUser
 ): Promise<void> => {
-  const list = loadReplies();
-  const target = list.find((r) => r.id === replyId);
-  if (!target) return;
-  if (target.author_id !== user.id) throw new Error("Action non autorisée");
-  saveReplies(list.filter((r) => r.id !== replyId));
+  const ref = doc(db, REPLIES, replyId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  if (snap.data().author_id !== user.id)
+    throw new Error("Action non autorisée");
+  await deleteDoc(ref);
 };
 
 export const toggleReplyLike = async (
   replyId: string,
   userId: string
 ): Promise<{ liked: boolean }> => {
-  const list = loadReplies();
-  const idx = list.findIndex((r) => r.id === replyId);
-  if (idx === -1) return { liked: false };
-  const hasLiked = list[idx].likes.includes(userId);
-  const likes = hasLiked
-    ? list[idx].likes.filter((id) => id !== userId)
-    : [...list[idx].likes, userId];
-  list[idx] = { ...list[idx], likes, like_count: likes.length };
-  saveReplies(list);
+  const ref = doc(db, REPLIES, replyId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return { liked: false };
+  const likes: string[] = Array.isArray(snap.data().likes) ? snap.data().likes : [];
+  const hasLiked = likes.includes(userId);
+  await updateDoc(ref, {
+    likes: hasLiked ? arrayRemove(userId) : arrayUnion(userId),
+    like_count: increment(hasLiked ? -1 : 1),
+  });
   return { liked: !hasLiked };
 };
 

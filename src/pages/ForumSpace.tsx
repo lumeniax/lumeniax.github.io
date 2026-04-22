@@ -29,8 +29,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import {
-  fetchPosts,
-  fetchSpaces,
+  subscribePosts,
+  subscribeSpaces,
   createPost,
   updatePost,
   deletePost,
@@ -44,8 +44,6 @@ import {
   type ForumSpace,
   type ForumUser,
 } from "@/hooks/useForum";
-
-const POLL_MS = 15_000;
 
 type Sort = "recent" | "popular";
 
@@ -73,40 +71,53 @@ export default function ForumSpace() {
   const [likingId, setLikingId] = useState<string | null>(null);
   const [joiningSpace, setJoiningSpace] = useState(false);
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const loadData = useCallback(
-    async (silent = false) => {
-      if (!silent) setLoading(true);
-      else setRefreshing(true);
-      setError(null);
-      try {
-        const [spaces, postsData] = await Promise.all([
-          fetchSpaces(),
-          fetchPosts(spaceId),
-        ]);
-        const currentSpace = spaces.find((s) => s.id === spaceId);
-        if (!currentSpace) throw new Error("Espace introuvable");
-        setSpace(currentSpace);
-        setPosts(postsData);
-      } catch (e) {
-        if (!silent)
-          console.error("loadSpace failed");
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [spaceId]
-  );
+  const loadData = useCallback((_silent = false) => {
+    // onSnapshot fournit déjà le temps réel ; petit feedback visuel sur clic.
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 400);
+  }, []);
 
   useEffect(() => {
-    loadData();
-    intervalRef.current = setInterval(() => loadData(true), POLL_MS);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+    if (!spaceId) return;
+    setLoading(true);
+    setError(null);
+    let postsReady = false;
+    let spaceReady = false;
+    const tryStop = () => {
+      if (postsReady && spaceReady) setLoading(false);
     };
-  }, [loadData]);
+    const unsubSpaces = subscribeSpaces(
+      (list) => {
+        const found = list.find((s) => s.id === spaceId) || null;
+        setSpace(found);
+        if (!found) setError("Espace introuvable");
+        spaceReady = true;
+        tryStop();
+      },
+      (err) => {
+        console.error("[ForumSpace] subscribeSpaces ÉCHEC:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    );
+    const unsubPosts = subscribePosts(
+      spaceId,
+      (list) => {
+        setPosts(list);
+        postsReady = true;
+        tryStop();
+      },
+      (err) => {
+        console.error("[ForumSpace] subscribePosts ÉCHEC:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    );
+    return () => {
+      unsubSpaces();
+      unsubPosts();
+    };
+  }, [spaceId]);
 
   function requireUser(action: () => void) {
     const u = getForumUser();

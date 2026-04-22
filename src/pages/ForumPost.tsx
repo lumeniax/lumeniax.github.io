@@ -27,10 +27,10 @@ import {
   CornerDownRight,
 } from "lucide-react";
 import {
-  fetchPost,
-  fetchSpaces,
-  fetchComments,
-  fetchReplies,
+  subscribePost,
+  subscribeSpaces,
+  subscribeComments,
+  subscribeReplies,
   createComment,
   updateComment,
   deleteComment,
@@ -49,8 +49,6 @@ import {
   type ForumReply,
   type ForumUser,
 } from "@/hooks/useForum";
-
-const POLL_MS = 15_000;
 
 export default function ForumPost() {
   const params = useParams<{ spaceId: string; postId: string }>();
@@ -82,44 +80,60 @@ export default function ForumPost() {
   const [likingCmtId, setLikingCmtId] = useState<string | null>(null);
   const [likingReplyId, setLikingReplyId] = useState<string | null>(null);
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const loadData = useCallback(
-    async (silent = false) => {
-      if (!silent) setLoading(true);
-      else setRefreshing(true);
-      setError(null);
-      try {
-        const [postData, cmts, spaces] = await Promise.all([
-          fetchPost(postId),
-          fetchComments(postId),
-          fetchSpaces(),
-        ]);
-        setPost(postData);
-        setComments(cmts);
-        const s = spaces.find((x) => x.id === spaceId);
-        if (s) setSpaceName(s.name);
-
-        const reps = await fetchReplies(postId);
-        setReplies(reps);
-      } catch (e) {
-        if (!silent)
-          console.error("loadPost failed");
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [postId, spaceId]
-  );
+  const loadData = useCallback((_silent = false) => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 400);
+  }, []);
 
   useEffect(() => {
-    loadData();
-    intervalRef.current = setInterval(() => loadData(true), POLL_MS);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+    if (!postId) return;
+    setLoading(true);
+    setError(null);
+    let postReady = false;
+    let cmtsReady = false;
+    const tryStop = () => {
+      if (postReady && cmtsReady) setLoading(false);
     };
-  }, [loadData]);
+    const unsubPost = subscribePost(
+      postId,
+      (p) => {
+        setPost(p);
+        if (!p) setError("Post introuvable");
+        postReady = true;
+        tryStop();
+      },
+      (err) => {
+        console.error("[ForumPost] subscribePost ÉCHEC:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    );
+    const unsubComments = subscribeComments(
+      postId,
+      (list) => {
+        setComments(list);
+        cmtsReady = true;
+        tryStop();
+      },
+      (err) => console.error("[ForumPost] subscribeComments ÉCHEC:", err)
+    );
+    const unsubReplies = subscribeReplies(postId, setReplies, (err) =>
+      console.error("[ForumPost] subscribeReplies ÉCHEC:", err)
+    );
+    const unsubSpaces = subscribeSpaces(
+      (list) => {
+        const s = list.find((x) => x.id === spaceId);
+        if (s) setSpaceName(s.name);
+      },
+      (err) => console.error("[ForumPost] subscribeSpaces ÉCHEC:", err)
+    );
+    return () => {
+      unsubPost();
+      unsubComments();
+      unsubReplies();
+      unsubSpaces();
+    };
+  }, [postId, spaceId]);
 
   function requireUser(action: () => void) {
     const u = getForumUser();

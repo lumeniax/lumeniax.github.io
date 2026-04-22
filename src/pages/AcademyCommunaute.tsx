@@ -33,7 +33,7 @@ import {
   Trash2,
 } from "lucide-react";
 import {
-  fetchSpaces,
+  subscribeSpaces,
   createSpace,
   updateSpace,
   deleteSpace,
@@ -59,8 +59,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   reseau: "Réseau",
 };
 const EMOJIS = ["💬", "📚", "🤝", "🧠", "⚡", "🎯", "🌍", "🚀", "💡", "🎓"];
-
-const POLL_MS = 15_000;
 
 type FilterCat = "all" | "echange" | "club" | "reseau";
 type Sort = "recent" | "popular" | "mine";
@@ -91,30 +89,29 @@ export default function AcademyCommunaute() {
   const [saving, setSaving] = useState(false);
   const [joiningId, setJoiningId] = useState<string | null>(null);
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const loadSpaces = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    else setRefreshing(true);
-    setError(null);
-    try {
-      const data = await fetchSpaces();
-      setSpaces(data);
-    } catch (e) {
-      console.error("loadSpaces failed:", e);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+  const loadSpaces = useCallback((_silent = false) => {
+    // Conservé pour compat (utilisé par le bouton "Rafraîchir") — onSnapshot
+    // se charge déjà du temps réel, on déclenche juste un petit feedback visuel.
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 400);
   }, []);
 
   useEffect(() => {
-    loadSpaces();
-    intervalRef.current = setInterval(() => loadSpaces(true), POLL_MS);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [loadSpaces]);
+    setLoading(true);
+    setError(null);
+    const unsub = subscribeSpaces(
+      (data) => {
+        setSpaces(data);
+        setLoading(false);
+      },
+      (err) => {
+        console.error("[Communauté] subscribeSpaces ÉCHEC:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    );
+    return () => unsub();
+  }, []);
 
   function requireUser(action: () => void) {
     const u = getForumUser();
