@@ -172,15 +172,11 @@ export default function AcademyCommunaute() {
   }
 
   async function submitSpace() {
-    const u = getForumUser();
-    if (!newName.trim()) {
-      setError("Veuillez saisir un nom d'espace.");
-      return;
-    }
+    if (!newName.trim()) return;
+    let u = getForumUser();
     if (!u) {
-      setError("Veuillez d'abord définir votre pseudo.");
-      setShowUserDialog(true);
-      return;
+      u = setForumUser("Anonyme");
+      setUser(u);
     }
     setError(null);
     setSaving(true);

@@ -75,7 +75,7 @@ async function api<T>(
   return (await res.json()) as T;
 }
 
-// ─── User identity (localStorage only) ───────────────────────────────────────
+// ─── User identity (in-memory + best-effort localStorage cache) ─────────────
 
 const USER_KEY = "lx_forum_user";
 const FAVORITES_KEY = "lx_forum_favorites";
@@ -84,28 +84,59 @@ function uid(): string {
   return Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
 }
 
-export function getForumUser(): ForumUser | null {
+let _user: ForumUser | null = null;
+let _favorites: string[] | null = null;
+
+function safeGet(key: string): string | null {
   try {
-    const raw = localStorage.getItem(USER_KEY);
-    return raw ? (JSON.parse(raw) as ForumUser) : null;
+    return localStorage.getItem(key);
   } catch {
     return null;
   }
 }
+function safeSet(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* localStorage may be blocked (iframe, private mode) — ignore */
+  }
+}
+
+export function getForumUser(): ForumUser | null {
+  if (_user) return _user;
+  const raw = safeGet(USER_KEY);
+  if (raw) {
+    try {
+      _user = JSON.parse(raw) as ForumUser;
+      return _user;
+    } catch {
+      /* fallthrough */
+    }
+  }
+  return null;
+}
 
 export function setForumUser(name: string): ForumUser {
-  const user: ForumUser = { id: uid(), name: name.trim() };
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
+  const trimmed = name.trim() || "Anonyme";
+  const user: ForumUser = { id: uid(), name: trimmed };
+  _user = user;
+  safeSet(USER_KEY, JSON.stringify(user));
   return user;
 }
 
 export function getFavoriteSpaces(): string[] {
-  try {
-    const raw = localStorage.getItem(FAVORITES_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
+  if (_favorites) return _favorites;
+  const raw = safeGet(FAVORITES_KEY);
+  if (raw) {
+    try {
+      _favorites = JSON.parse(raw) as string[];
+      return _favorites;
+    } catch {
+      /* fallthrough */
+    }
   }
+  _favorites = [];
+  return _favorites;
 }
 
 export function toggleFavoriteSpace(spaceId: string): boolean {
@@ -113,7 +144,8 @@ export function toggleFavoriteSpace(spaceId: string): boolean {
   const next = favs.includes(spaceId)
     ? favs.filter((id) => id !== spaceId)
     : [...favs, spaceId];
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+  _favorites = next;
+  safeSet(FAVORITES_KEY, JSON.stringify(next));
   return next.includes(spaceId);
 }
 
