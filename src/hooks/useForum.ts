@@ -1,3 +1,5 @@
+import { supabase } from "@/lib/supabaseClient";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ForumUser {
@@ -54,35 +56,6 @@ export interface ForumReply {
   likes: string[];
 }
 
-// ─── HTTP helper ─────────────────────────────────────────────────────────────
-
-async function api<T>(
-  url: string,
-  options: RequestInit = {}
-): Promise<T> {
-  try {
-    const res = await fetch(url, {
-      headers: { "Content-Type": "application/json" },
-      ...options,
-    });
-    if (!res.ok) {
-      let msg = `HTTP ${res.status}`;
-      try {
-        const j = await res.json();
-        if (j?.error) msg = j.error;
-      } catch {}
-      throw new Error(msg);
-    }
-    return (await res.json()) as T;
-  } catch (e: any) {
-    // On GitHub Pages, /api/* will 404. We catch this to provide a clean "Coming Soon" state.
-    if (e.message.includes("HTTP 404") || e.name === "TypeError") {
-      throw new Error("COMMUNITY_UNAVAILABLE");
-    }
-    throw e;
-  }
-}
-
 // ─── User identity (localStorage only) ───────────────────────────────────────
 
 const USER_KEY = "lx_forum_user";
@@ -127,159 +100,348 @@ export function toggleFavoriteSpace(spaceId: string): boolean {
 
 // ─── Spaces ───────────────────────────────────────────────────────────────────
 
-export const fetchSpaces = (): Promise<ForumSpace[]> =>
-  api<ForumSpace[]>("/api/forum/spaces");
+export const fetchSpaces = async (): Promise<ForumSpace[]> => {
+  const { data, error } = await supabase
+    .from("spaces")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-export const createSpace = (
+  if (error) throw error;
+  return (data || []) as ForumSpace[];
+};
+
+export const createSpace = async (
   data: Pick<ForumSpace, "name" | "description" | "emoji" | "category">,
   author: ForumUser
-): Promise<ForumSpace> =>
-  api<ForumSpace>("/api/forum/spaces", {
-    method: "POST",
-    body: JSON.stringify({
-      ...data,
-      authorId: author.id,
-      authorName: author.name,
-    }),
-  });
+): Promise<ForumSpace> => {
+  const { data: space, error } = await supabase
+    .from("spaces")
+    .insert([
+      {
+        ...data,
+        author_id: author.id,
+        author_name: author.name,
+        members: [author.id],
+        member_count: 1,
+        post_count: 0,
+      },
+    ])
+    .select()
+    .single();
 
-export const toggleMember = (
+  if (error) throw error;
+  return space as ForumSpace;
+};
+
+export const toggleMember = async (
   spaceId: string,
   userId: string
-): Promise<{ joined: boolean }> =>
-  api<{ joined: boolean }>(`/api/forum/spaces/${spaceId}/join`, {
-    method: "POST",
-    body: JSON.stringify({ userId }),
-  });
+): Promise<{ joined: boolean }> => {
+  const { data: space, error: fetchError } = await supabase
+    .from("spaces")
+    .select("members")
+    .eq("id", spaceId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  const members = space.members || [];
+  const isMember = members.includes(userId);
+  const newMembers = isMember
+    ? members.filter((id: string) => id !== userId)
+    : [...members, userId];
+
+  const { error: updateError } = await supabase
+    .from("spaces")
+    .update({
+      members: newMembers,
+      member_count: newMembers.length,
+    })
+    .eq("id", spaceId);
+
+  if (updateError) throw updateError;
+  return { joined: !isMember };
+};
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
 
-export const fetchPosts = (spaceId: string): Promise<ForumPost[]> =>
-  api<ForumPost[]>(`/api/forum/spaces/${spaceId}/posts`);
+export const fetchPosts = async (spaceId: string): Promise<ForumPost[]> => {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("space_id", spaceId)
+    .order("created_at", { ascending: false });
 
-export const fetchPost = (postId: string): Promise<ForumPost> =>
-  api<ForumPost>(`/api/forum/posts/${postId}`);
+  if (error) throw error;
+  return (data || []) as ForumPost[];
+};
 
-export const createPost = (
+export const fetchPost = async (postId: string): Promise<ForumPost> => {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("id", postId)
+    .single();
+
+  if (error) throw error;
+  return data as ForumPost;
+};
+
+export const createPost = async (
   data: { spaceId: string; title: string; body: string },
   author: ForumUser
-): Promise<ForumPost> =>
-  api<ForumPost>("/api/forum/posts", {
-    method: "POST",
-    body: JSON.stringify({
-      spaceId: data.spaceId,
-      title: data.title,
-      body: data.body,
-      authorId: author.id,
-      authorName: author.name,
-    }),
-  });
+): Promise<ForumPost> => {
+  const { data: post, error } = await supabase
+    .from("posts")
+    .insert([
+      {
+        space_id: data.spaceId,
+        title: data.title,
+        body: data.body,
+        author_id: author.id,
+        author_name: author.name,
+        likes: [],
+        like_count: 0,
+        comment_count: 0,
+      },
+    ])
+    .select()
+    .single();
 
-export const updatePost = (
+  if (error) throw error;
+
+  // Increment post_count in space
+  await supabase.rpc("increment_post_count", { space_row_id: data.spaceId });
+
+  return post as ForumPost;
+};
+
+export const updatePost = async (
   postId: string,
   data: { title: string; body: string },
   user: ForumUser
-): Promise<void> =>
-  api(`/api/forum/posts/${postId}`, {
-    method: "PATCH",
-    body: JSON.stringify({ ...data, userId: user.id }),
-  });
+): Promise<void> => {
+  const { error } = await supabase
+    .from("posts")
+    .update({ title: data.title, body: data.body })
+    .eq("id", postId)
+    .eq("author_id", user.id);
 
-export const deletePost = (postId: string, user: ForumUser): Promise<void> =>
-  api(`/api/forum/posts/${postId}`, {
-    method: "DELETE",
-    body: JSON.stringify({ userId: user.id }),
-  });
+  if (error) throw error;
+};
 
-export const togglePostLike = (
+export const deletePost = async (postId: string, user: ForumUser): Promise<void> => {
+  const { error } = await supabase
+    .from("posts")
+    .delete()
+    .eq("id", postId)
+    .eq("author_id", user.id);
+
+  if (error) throw error;
+};
+
+export const togglePostLike = async (
   postId: string,
   userId: string
-): Promise<{ liked: boolean }> =>
-  api(`/api/forum/posts/${postId}/like`, {
-    method: "POST",
-    body: JSON.stringify({ userId }),
-  });
+): Promise<{ liked: boolean }> => {
+  const { data: post, error: fetchError } = await supabase
+    .from("posts")
+    .select("likes")
+    .eq("id", postId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  const likes = post.likes || [];
+  const isLiked = likes.includes(userId);
+  const newLikes = isLiked
+    ? likes.filter((id: string) => id !== userId)
+    : [...likes, userId];
+
+  const { error: updateError } = await supabase
+    .from("posts")
+    .update({
+      likes: newLikes,
+      like_count: newLikes.length,
+    })
+    .eq("id", postId);
+
+  if (updateError) throw updateError;
+  return { liked: !isLiked };
+};
 
 // ─── Comments ─────────────────────────────────────────────────────────────────
 
-export const fetchComments = (postId: string): Promise<ForumComment[]> =>
-  api<ForumComment[]>(`/api/forum/posts/${postId}/comments`);
+export const fetchComments = async (postId: string): Promise<ForumComment[]> => {
+  const { data, error } = await supabase
+    .from("comments")
+    .select("*")
+    .eq("post_id", postId)
+    .order("created_at", { ascending: true });
 
-export const createComment = (
+  if (error) throw error;
+  return (data || []) as ForumComment[];
+};
+
+export const createComment = async (
   data: { postId: string; body: string },
   author: ForumUser
-): Promise<ForumComment> =>
-  api<ForumComment>("/api/forum/comments", {
-    method: "POST",
-    body: JSON.stringify({
-      postId: data.postId,
-      body: data.body,
-      authorId: author.id,
-      authorName: author.name,
-    }),
-  });
+): Promise<ForumComment> => {
+  const { data: comment, error } = await supabase
+    .from("comments")
+    .insert([
+      {
+        post_id: data.postId,
+        body: data.body,
+        author_id: author.id,
+        author_name: author.name,
+        likes: [],
+        like_count: 0,
+      },
+    ])
+    .select()
+    .single();
 
-export const updateComment = (
+  if (error) throw error;
+
+  // Increment comment_count in post
+  await supabase.rpc("increment_comment_count", { post_row_id: data.postId });
+
+  return comment as ForumComment;
+};
+
+export const updateComment = async (
   commentId: string,
   body: string,
   user: ForumUser
-): Promise<void> =>
-  api(`/api/forum/comments/${commentId}`, {
-    method: "PATCH",
-    body: JSON.stringify({ body, userId: user.id }),
-  });
+): Promise<void> => {
+  const { error } = await supabase
+    .from("comments")
+    .update({ body })
+    .eq("id", commentId)
+    .eq("author_id", user.id);
 
-export const deleteComment = (
+  if (error) throw error;
+};
+
+export const deleteComment = async (
   commentId: string,
   user: ForumUser
-): Promise<void> =>
-  api(`/api/forum/comments/${commentId}`, {
-    method: "DELETE",
-    body: JSON.stringify({ userId: user.id }),
-  });
+): Promise<void> => {
+  const { error } = await supabase
+    .from("comments")
+    .delete()
+    .eq("id", commentId)
+    .eq("author_id", user.id);
 
-export const toggleCommentLike = (
+  if (error) throw error;
+};
+
+export const toggleCommentLike = async (
   commentId: string,
   userId: string
-): Promise<{ liked: boolean }> =>
-  api(`/api/forum/comments/${commentId}/like`, {
-    method: "POST",
-    body: JSON.stringify({ userId }),
-  });
+): Promise<{ liked: boolean }> => {
+  const { data: comment, error: fetchError } = await supabase
+    .from("comments")
+    .select("likes")
+    .eq("id", commentId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  const likes = comment.likes || [];
+  const isLiked = likes.includes(userId);
+  const newLikes = isLiked
+    ? likes.filter((id: string) => id !== userId)
+    : [...likes, userId];
+
+  const { error: updateError } = await supabase
+    .from("comments")
+    .update({
+      likes: newLikes,
+      like_count: newLikes.length,
+    })
+    .eq("id", commentId);
+
+  if (updateError) throw updateError;
+  return { liked: !isLiked };
+};
 
 // ─── Replies ──────────────────────────────────────────────────────────────────
 
-export const fetchReplies = (postId: string): Promise<ForumReply[]> =>
-  api<ForumReply[]>(`/api/forum/posts/${postId}/replies`);
+export const fetchReplies = async (postId: string): Promise<ForumReply[]> => {
+  const { data, error } = await supabase
+    .from("replies")
+    .select("*")
+    .eq("post_id", postId)
+    .order("created_at", { ascending: true });
 
-export const createReply = (
+  if (error) throw error;
+  return (data || []) as ForumReply[];
+};
+
+export const createReply = async (
   data: { commentId: string; body: string },
   author: ForumUser
-): Promise<ForumReply> =>
-  api<ForumReply>("/api/forum/replies", {
-    method: "POST",
-    body: JSON.stringify({
-      commentId: data.commentId,
-      body: data.body,
-      authorId: author.id,
-      authorName: author.name,
-    }),
-  });
+): Promise<ForumReply> => {
+  const { data: reply, error } = await supabase
+    .from("replies")
+    .insert([
+      {
+        comment_id: data.commentId,
+        body: data.body,
+        author_id: author.id,
+        author_name: author.name,
+        likes: [],
+        like_count: 0,
+      },
+    ])
+    .select()
+    .single();
 
-export const deleteReply = (replyId: string, user: ForumUser): Promise<void> =>
-  api(`/api/forum/replies/${replyId}`, {
-    method: "DELETE",
-    body: JSON.stringify({ userId: user.id }),
-  });
+  if (error) throw error;
+  return reply as ForumReply;
+};
 
-export const toggleReplyLike = (
+export const deleteReply = async (replyId: string, user: ForumUser): Promise<void> => {
+  const { error } = await supabase
+    .from("replies")
+    .delete()
+    .eq("id", replyId)
+    .eq("author_id", user.id);
+
+  if (error) throw error;
+};
+
+export const toggleReplyLike = async (
   replyId: string,
   userId: string
-): Promise<{ liked: boolean }> =>
-  api(`/api/forum/replies/${replyId}/like`, {
-    method: "POST",
-    body: JSON.stringify({ userId }),
-  });
+): Promise<{ liked: boolean }> => {
+  const { data: reply, error: fetchError } = await supabase
+    .from("replies")
+    .select("likes")
+    .eq("id", replyId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  const likes = reply.likes || [];
+  const isLiked = likes.includes(userId);
+  const newLikes = isLiked
+    ? likes.filter((id: string) => id !== userId)
+    : [...likes, userId];
+
+  const { error: updateError } = await supabase
+    .from("replies")
+    .update({
+      likes: newLikes,
+      like_count: newLikes.length,
+    })
+    .eq("id", replyId);
+
+  if (updateError) throw updateError;
+  return { liked: !isLiked };
+};
 
 // ─── Formatting ───────────────────────────────────────────────────────────────
 
