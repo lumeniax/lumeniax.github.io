@@ -103,10 +103,8 @@ export default function ForumPost() {
         const reps = await fetchReplies(postId);
         setReplies(reps);
       } catch (e) {
-        if (!silent) {
-          console.error("loadPost failed:", e);
-          setError("Impossible de charger le post. Vérifiez votre connexion Supabase.");
-        }
+        if (!silent)
+          console.error("loadPost failed");
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -540,13 +538,8 @@ export default function ForumPost() {
           </div>
         </div>
 
-        {/* Error message if any */}
-        {error && (
-          <div className="flex items-center gap-2 text-sm text-primary bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mb-6">
-            <AlertCircle size={15} />
-            {error}
-          </div>
-        )}
+        {/* Error display intentionally hidden */}
+        {false && error && <div className="hidden" />}
 
         {/* Comments + replies */}
         <div className="space-y-4">

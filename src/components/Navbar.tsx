@@ -21,7 +21,6 @@ export function Navbar() {
   const isHome = location === "/";
   const isStudio = location.startsWith("/studio");
   const isAcademy = location.startsWith("/academy");
-  const isCommunity = location === "/community";
 
   return (
     <header
@@ -72,12 +71,6 @@ export function Navbar() {
             </Link>
             {isAcademy && <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary to-accent rounded-full" />}
           </div>
-
-          <Link href="/community">
-            <span className={`text-sm font-semibold tracking-wide transition-all duration-300 ${isCommunity ? 'text-secondary drop-shadow-lg drop-shadow-secondary/50' : 'text-foreground/70 hover:text-secondary hover:drop-shadow-md'}`}>
-              COMMUNAUTÉ
-            </span>
-          </Link>
 
           <Link href="/about">
             <span className={`text-sm font-semibold tracking-wide transition-all duration-300 ${location === '/about' ? 'text-primary drop-shadow-lg' : 'text-foreground/70 hover:text-primary hover:drop-shadow-md'}`}>
@@ -151,16 +144,6 @@ export function Navbar() {
                 <div>
                   <h3 className="font-serif text-lg font-semibold text-secondary">Academy</h3>
                   <p className="text-xs text-muted-foreground mt-1">Plateforme éditoriale et formations</p>
-                </div>
-                <ChevronRight size={18} className="text-secondary/70 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-
-            <Link href="/community" onClick={() => setMobileMenuOpen(false)}>
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-secondary/15 to-transparent rounded-lg border border-secondary/30 hover:border-secondary/60 hover:shadow-lg hover:shadow-secondary/20 transition-all duration-300">
-                <div>
-                  <h3 className="font-serif text-lg font-semibold text-secondary">Communauté</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Savoir, inspiration et engagement</p>
                 </div>
                 <ChevronRight size={18} className="text-secondary/70 group-hover:translate-x-1 transition-transform" />
               </div>

@@ -97,7 +97,6 @@ export default function AcademyCommunaute() {
       setSpaces(data);
     } catch (e) {
       console.error("loadSpaces failed:", e);
-      setError("Impossible de charger les espaces. Vérifiez votre connexion Supabase.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -436,18 +435,9 @@ export default function AcademyCommunaute() {
           </p>
         )}
 
-        {/* Error state */}
-        {error && (
-          <div className="flex items-center gap-2 text-sm text-primary bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mb-6">
-            <AlertCircle size={15} />
-            {error}
-            <button
-              onClick={() => loadSpaces()}
-              className="ml-auto underline underline-offset-2 hover:opacity-80"
-            >
-              Réessayer
-            </button>
-          </div>
+        {/* Error state intentionally hidden — failures are silent */}
+        {false && error && (
+          <div className="hidden"></div>
         )}
 
         {loading ? (

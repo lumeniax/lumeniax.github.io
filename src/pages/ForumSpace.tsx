@@ -90,10 +90,8 @@ export default function ForumSpace() {
         setSpace(currentSpace);
         setPosts(postsData);
       } catch (e) {
-        if (!silent) {
-          console.error("loadSpace failed:", e);
-          setError("Impossible de charger l'espace. Vérifiez votre connexion Supabase.");
-        }
+        if (!silent)
+          console.error("loadSpace failed");
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -431,13 +429,8 @@ export default function ForumSpace() {
           ))}
         </div>
 
-        {/* Error message if any */}
-        {error && (
-          <div className="flex items-center gap-2 text-sm text-primary bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mb-6">
-            <AlertCircle size={15} />
-            {error}
-          </div>
-        )}
+        {/* Error display intentionally hidden */}
+        {false && error && <div className="hidden" />}
 
         {/* Posts */}
         <div className="space-y-4">
