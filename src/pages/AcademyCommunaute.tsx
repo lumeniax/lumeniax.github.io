@@ -29,10 +29,14 @@ import {
   Star,
   Sparkles,
   TrendingUp,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import {
   fetchSpaces,
   createSpace,
+  updateSpace,
+  deleteSpace,
   toggleMember,
   getForumUser,
   setForumUser,
@@ -74,6 +78,7 @@ export default function AcademyCommunaute() {
 
   const [showUserDialog, setShowUserDialog] = useState(false);
   const [showSpaceDialog, setShowSpaceDialog] = useState(false);
+  const [editingSpaceId, setEditingSpaceId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   const [newName, setNewName] = useState("");
@@ -176,11 +181,6 @@ export default function AcademyCommunaute() {
       ev.preventDefault();
       ev.stopPropagation();
     }
-    console.log("[Communauté] submitSpace appelé", {
-      newName,
-      newCategory,
-      newEmoji,
-    });
     const trimmedName = newName.trim();
     if (!trimmedName) {
       console.warn("[Communauté] nom vide, abandon");
@@ -194,31 +194,69 @@ export default function AcademyCommunaute() {
     setError(null);
     setSaving(true);
     try {
-      console.log("[Communauté] création locale (localStorage) …");
-      const created = await createSpace(
-        {
+      if (editingSpaceId) {
+        console.log("[Communauté] mise à jour locale", editingSpaceId);
+        const updated = updateSpace(editingSpaceId, {
           name: trimmedName,
           description: newDesc.trim(),
           emoji: newEmoji,
           category: newCategory,
-        },
-        u
-      );
-      console.log("[Communauté] espace créé:", created);
-      setSpaces((prev) => [created, ...prev.filter((s) => s.id !== created.id)]);
+        });
+        if (updated) {
+          setSpaces((prev) =>
+            prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s))
+          );
+        }
+      } else {
+        console.log("[Communauté] création locale (localStorage) …");
+        const created = await createSpace(
+          {
+            name: trimmedName,
+            description: newDesc.trim(),
+            emoji: newEmoji,
+            category: newCategory,
+          },
+          u
+        );
+        console.log("[Communauté] espace créé:", created);
+        setSpaces((prev) => [created, ...prev.filter((s) => s.id !== created.id)]);
+      }
       setNewName("");
       setNewDesc("");
       setNewEmoji("💬");
       setNewCategory("echange");
+      setEditingSpaceId(null);
       setShowSpaceDialog(false);
       loadSpaces(true);
     } catch (e: any) {
-      console.error("[Communauté] createSpace ÉCHEC:", e);
+      console.error("[Communauté] submitSpace ÉCHEC:", e);
       const msg = e?.message || "Erreur inconnue";
-      window.alert(`Impossible de créer l'espace : ${msg}`);
+      window.alert(`Impossible d'enregistrer l'espace : ${msg}`);
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleEditSpace(space: ForumSpace) {
+    setEditingSpaceId(space.id);
+    setNewName(space.name);
+    setNewDesc(space.description);
+    setNewEmoji(space.emoji);
+    setNewCategory(space.category);
+    setShowSpaceDialog(true);
+  }
+
+  function handleDeleteSpace(space: ForumSpace) {
+    if (
+      !window.confirm(
+        `Supprimer l'espace « ${space.name} » ? Tous les posts associés seront également supprimés.`
+      )
+    )
+      return;
+    console.log("[Communauté] suppression espace", space.id);
+    deleteSpace(space.id);
+    setSpaces((prev) => prev.filter((s) => s.id !== space.id));
+    loadSpaces(true);
   }
 
   const stats = useMemo(() => {
@@ -309,7 +347,16 @@ export default function AcademyCommunaute() {
             )}
             <Button
               size="sm"
-              onClick={() => requireUser(() => setShowSpaceDialog(true))}
+              onClick={() =>
+                requireUser(() => {
+                  setEditingSpaceId(null);
+                  setNewName("");
+                  setNewDesc("");
+                  setNewEmoji("💬");
+                  setNewCategory("echange");
+                  setShowSpaceDialog(true);
+                })
+              }
               className="gap-2"
             >
               <PlusCircle size={15} />
@@ -471,6 +518,7 @@ export default function AcademyCommunaute() {
               const isMember = user ? space.members.includes(user.id) : false;
               const isJoining = joiningId === space.id;
               const isFav = favorites.includes(space.id);
+              const isOwner = !!user && space.author_id === user.id;
               const memberSample = space.members.slice(0, 4);
               return (
                 <motion.div
@@ -564,6 +612,26 @@ export default function AcademyCommunaute() {
                       {isMember ? "Rejoint" : "Rejoindre"}
                     </Button>
                   </div>
+                  {isOwner && (
+                    <div className="flex items-center justify-end gap-3 mt-3 pt-3 border-t border-border/40 text-xs">
+                      <button
+                        onClick={() => handleEditSpace(space)}
+                        className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+                        title="Modifier l'espace"
+                      >
+                        <Pencil size={12} />
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSpace(space)}
+                        className="flex items-center gap-1 text-muted-foreground hover:text-red-400 transition-colors"
+                        title="Supprimer l'espace"
+                      >
+                        <Trash2 size={12} />
+                        Supprimer
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               );
             })}
@@ -604,11 +672,19 @@ export default function AcademyCommunaute() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: créer espace */}
-      <Dialog open={showSpaceDialog} onOpenChange={setShowSpaceDialog}>
+      {/* Dialog: créer / modifier espace */}
+      <Dialog
+        open={showSpaceDialog}
+        onOpenChange={(open) => {
+          setShowSpaceDialog(open);
+          if (!open) setEditingSpaceId(null);
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-serif">Créer un espace</DialogTitle>
+            <DialogTitle className="font-serif">
+              {editingSpaceId ? "Modifier l'espace" : "Créer un espace"}
+            </DialogTitle>
           </DialogHeader>
           <form
             className="space-y-4"
@@ -674,6 +750,8 @@ export default function AcademyCommunaute() {
             >
               {saving ? (
                 <Loader2 className="animate-spin" size={16} />
+              ) : editingSpaceId ? (
+                "Enregistrer"
               ) : (
                 "Créer l'espace"
               )}
