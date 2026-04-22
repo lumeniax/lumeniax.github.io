@@ -1,19 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Firebase initialization (Firestore only).
+// Firebase initialization (Firestore).
 //
-// Pour configurer Firebase :
-//   1. Créez un projet sur https://console.firebase.google.com/
-//   2. Activez Firestore Database (mode test pour démarrer)
-//   3. Récupérez la config web (Project Settings → "Vos applis" → SDK config)
-//   4. Soit collez les valeurs ci-dessous à la place des "REPLACE_ME",
-//      soit créez un fichier .env à la racine avec les variables suivantes :
+// La config web Firebase est PUBLIQUE par design : elle est bundlée côté client
+// et identifie simplement votre projet. La sécurité réelle se fait via les
+// règles Firestore (Console Firebase → Firestore → Règles).
 //
-//        VITE_FIREBASE_API_KEY=...
-//        VITE_FIREBASE_AUTH_DOMAIN=...
-//        VITE_FIREBASE_PROJECT_ID=...
-//        VITE_FIREBASE_STORAGE_BUCKET=...
-//        VITE_FIREBASE_MESSAGING_SENDER_ID=...
-//        VITE_FIREBASE_APP_ID=...
+// Les variables VITE_FIREBASE_* peuvent surcharger ces valeurs si nécessaire.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { initializeApp, type FirebaseApp } from "firebase/app";
@@ -22,12 +14,13 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 const env = import.meta.env;
 
 export const firebaseConfig = {
-  apiKey: env.VITE_FIREBASE_API_KEY ?? "REPLACE_ME",
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN ?? "REPLACE_ME",
-  projectId: env.VITE_FIREBASE_PROJECT_ID ?? "REPLACE_ME",
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET ?? "REPLACE_ME",
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? "REPLACE_ME",
-  appId: env.VITE_FIREBASE_APP_ID ?? "REPLACE_ME",
+  apiKey: env.VITE_FIREBASE_API_KEY ?? "AIzaSyDJmSMa3Zya5cfhPj769J4nzDlORtWiZSc",
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN ?? "lumeniax.firebaseapp.com",
+  projectId: env.VITE_FIREBASE_PROJECT_ID ?? "lumeniax",
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET ?? "lumeniax.firebasestorage.app",
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? "236882294787",
+  appId: env.VITE_FIREBASE_APP_ID ?? "1:236882294787:web:97329a656a812b34337636",
+  measurementId: env.VITE_FIREBASE_MEASUREMENT_ID ?? "G-X7YNGZ21JZ",
 };
 
 export const isFirebaseConfigured = !Object.values(firebaseConfig).some(
@@ -36,7 +29,7 @@ export const isFirebaseConfigured = !Object.values(firebaseConfig).some(
 
 if (!isFirebaseConfigured) {
   console.warn(
-    "[firebase] Configuration manquante — remplacez les placeholders dans src/firebase.ts ou définissez les variables VITE_FIREBASE_* dans .env"
+    "[firebase] Configuration manquante — vérifiez src/firebase.ts"
   );
 }
 
