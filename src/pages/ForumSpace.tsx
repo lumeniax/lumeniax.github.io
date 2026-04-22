@@ -39,11 +39,11 @@ import {
   getForumUser,
   setForumUser,
   relTime,
-  initials,
   type ForumPost,
   type ForumSpace,
   type ForumUser,
 } from "@/hooks/useForum";
+import { UserAvatar } from "@/pages/AcademyCommunaute";
 
 type Sort = "recent" | "popular";
 
@@ -191,25 +191,25 @@ export default function ForumSpace() {
 
   async function submitPost() {
     const u = getForumUser();
-    if (!postTitle.trim() || !u) return;
+    if (!postBody.trim() || !u) return;
     setSaving(true);
     try {
       if (editingId) {
         await updatePost(
           editingId,
-          { title: postTitle.trim(), body: postBody.trim() },
+          { title: "", body: postBody.trim() },
           u
         );
         setPosts((prev) =>
           prev.map((p) =>
             p.id === editingId
-              ? { ...p, title: postTitle.trim(), body: postBody.trim() }
+              ? { ...p, body: postBody.trim() }
               : p
           )
         );
       } else {
         const newPost = await createPost(
-          { spaceId, title: postTitle.trim(), body: postBody.trim() },
+          { spaceId, title: "", body: postBody.trim() },
           u
         );
         setPosts((prev) => [newPost, ...prev]);
@@ -233,6 +233,13 @@ export default function ForumSpace() {
     setPostTitle(p.title);
     setPostBody(p.body);
     setShowPostDialog(true);
+  }
+
+  // Aperçu = première ligne ou 60 premiers caractères, pour breadcrumb / titre court
+  function postExcerpt(p: ForumPost): string {
+    if (p.title && p.title.trim()) return p.title;
+    const firstLine = (p.body || "").split("\n")[0].trim();
+    return firstLine.length > 80 ? firstLine.slice(0, 80) + "…" : firstLine || "Publication";
   }
 
   async function handleDelete(p: ForumPost) {
@@ -350,7 +357,7 @@ export default function ForumSpace() {
               </div>
               <Button
                 size="sm"
-                variant={isMember ? "secondary" : "default"}
+                variant={isMember ? "outline" : "default"}
                 disabled={joiningSpace}
                 onClick={handleJoin}
                 className="gap-2"
@@ -358,7 +365,7 @@ export default function ForumSpace() {
                 {joiningSpace ? (
                   <Loader2 size={13} className="animate-spin" />
                 ) : isMember ? (
-                  "✓ Rejoint"
+                  "Quitter cet espace"
                 ) : (
                   "Rejoindre"
                 )}
@@ -371,9 +378,7 @@ export default function ForumSpace() {
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           {user ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                {initials(user.name)}
-              </span>
+              <UserAvatar name={user.name} avatar={user.avatar} size={28} />
               Connecté en tant que{" "}
               <span className="font-semibold text-foreground">{user.name}</span>
             </div>
@@ -463,24 +468,32 @@ export default function ForumSpace() {
                 className="p-6 rounded-2xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-md hover:shadow-primary/5 transition-all duration-300"
               >
                 <div className="flex items-start gap-4">
-                  <span className="flex-none flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 text-primary text-sm font-bold mt-0.5">
-                    {initials(post.author_name)}
-                  </span>
+                  <UserAvatar
+                    name={post.author_name}
+                    avatar={post.author_avatar}
+                    size={36}
+                    className="flex-none mt-0.5"
+                  />
                   <div className="flex-1 min-w-0">
-                    <Link
-                      href={`/academy/communaute/${spaceId}/${post.id}`}
-                    >
-                      <h3 className="font-serif text-lg font-semibold hover:text-primary transition-colors cursor-pointer line-clamp-2 mb-1">
-                        {post.title}
-                      </h3>
-                    </Link>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {post.body}
+                    <p className="text-sm font-semibold mb-0.5">
+                      {post.author_name}
                     </p>
+                    <p className="text-[11px] text-muted-foreground mb-2">
+                      {relTime(post.created_at)}
+                    </p>
+                    {post.title && post.title.trim() && (
+                      <Link href={`/academy/communaute/${spaceId}/${post.id}`}>
+                        <h3 className="font-serif text-base font-semibold hover:text-primary transition-colors cursor-pointer line-clamp-2 mb-1">
+                          {post.title}
+                        </h3>
+                      </Link>
+                    )}
+                    <Link href={`/academy/communaute/${spaceId}/${post.id}`}>
+                      <p className="text-sm text-foreground/80 line-clamp-3 mb-3 cursor-pointer hover:text-foreground transition-colors whitespace-pre-wrap">
+                        {post.body}
+                      </p>
+                    </Link>
                     <div className="flex items-center gap-4 flex-wrap">
-                      <span className="text-xs text-muted-foreground">
-                        {post.author_name} · {relTime(post.created_at)}
-                      </span>
                       <button
                         onClick={() => handleLike(post.id)}
                         disabled={likingId === post.id}
@@ -588,23 +601,17 @@ export default function ForumSpace() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Input
-              placeholder="Titre du post"
-              value={postTitle}
-              onChange={(e) => setPostTitle(e.target.value)}
-              maxLength={120}
-              autoFocus
-            />
             <Textarea
-              placeholder="Développez votre idée, question ou partage…"
+              placeholder="Partagez votre idée, question ou expérience…"
               value={postBody}
               onChange={(e) => setPostBody(e.target.value)}
-              rows={5}
+              rows={6}
               maxLength={2000}
+              autoFocus
             />
             <Button
               onClick={submitPost}
-              disabled={!postTitle.trim() || saving}
+              disabled={!postBody.trim() || saving}
               className="w-full"
             >
               {saving ? (

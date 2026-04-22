@@ -31,7 +31,15 @@ import {
   TrendingUp,
   Pencil,
   Trash2,
+  LogOut,
+  DoorOpen,
+  Camera,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   subscribeSpaces,
   createSpace,
@@ -40,6 +48,9 @@ import {
   toggleMember,
   getForumUser,
   setForumUser,
+  clearForumUser,
+  leaveCommunity,
+  updateProfileEverywhere,
   getFavoriteSpaces,
   toggleFavoriteSpace,
   initials,
@@ -47,6 +58,64 @@ import {
   type ForumSpace,
   type ForumUser,
 } from "@/hooks/useForum";
+
+// Redimensionne une image (File) en data URL ≤ 128×128 (compact pour Firestore)
+async function fileToAvatarDataUrl(file: File): Promise<string> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = url;
+    });
+    const max = 128;
+    const ratio = Math.min(max / img.width, max / img.height, 1);
+    const w = Math.round(img.width * ratio);
+    const h = Math.round(img.height * ratio);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("canvas indisponible");
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL("image/jpeg", 0.85);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function UserAvatar({
+  name,
+  avatar,
+  size = 24,
+  className = "",
+}: {
+  name: string;
+  avatar?: string;
+  size?: number;
+  className?: string;
+}) {
+  if (avatar) {
+    return (
+      <img
+        src={avatar}
+        alt={name}
+        style={{ width: size, height: size }}
+        className={`rounded-full object-cover ${className}`}
+      />
+    );
+  }
+  return (
+    <span
+      style={{ width: size, height: size, fontSize: Math.max(10, size * 0.4) }}
+      className={`flex items-center justify-center rounded-full bg-primary text-primary-foreground font-bold ${className}`}
+    >
+      {initials(name)}
+    </span>
+  );
+}
+export { UserAvatar };
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   echange: <MessageSquare size={13} />,
@@ -75,6 +144,7 @@ export default function AcademyCommunaute() {
   const [favorites, setFavorites] = useState<string[]>(getFavoriteSpaces());
 
   const [showUserDialog, setShowUserDialog] = useState(false);
+  const [editProfileMode, setEditProfileMode] = useState(false);
   const [showSpaceDialog, setShowSpaceDialog] = useState(false);
   const [editingSpaceId, setEditingSpaceId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
@@ -86,8 +156,12 @@ export default function AcademyCommunaute() {
     "echange"
   );
   const [nameInput, setNameInput] = useState("");
+  const [avatarInput, setAvatarInput] = useState<string | undefined>(undefined);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [joiningId, setJoiningId] = useState<string | null>(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [leavingCommunity, setLeavingCommunity] = useState(false);
 
   const loadSpaces = useCallback((_silent = false) => {
     // Conservé pour compat (utilisé par le bouton "Rafraîchir") — onSnapshot
@@ -123,15 +197,77 @@ export default function AcademyCommunaute() {
     }
   }
 
-  function handleSetUser() {
+  async function handleSetUser() {
     if (!nameInput.trim()) return;
-    const u = setForumUser(nameInput);
+    const wasEditing = editProfileMode;
+    const u = setForumUser(nameInput, avatarInput);
     setUser(u);
     setShowUserDialog(false);
     setNameInput("");
+    setAvatarInput(undefined);
+    setEditProfileMode(false);
+    if (wasEditing) {
+      // Propager le nouveau nom + avatar à toutes les contributions existantes
+      updateProfileEverywhere(u).catch(() => {});
+    }
     if (pendingAction) {
       pendingAction();
       setPendingAction(null);
+    }
+  }
+
+  function openProfileEditor() {
+    const u = getForumUser();
+    setEditProfileMode(true);
+    setNameInput(u?.name ?? "");
+    setAvatarInput(u?.avatar);
+    setShowUserDialog(true);
+    setProfileMenuOpen(false);
+  }
+
+  async function handleAvatarFile(file: File) {
+    if (!file.type.startsWith("image/")) {
+      window.alert("Veuillez choisir une image.");
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      window.alert("Image trop lourde (max 4 Mo).");
+      return;
+    }
+    setAvatarUploading(true);
+    try {
+      const dataUrl = await fileToAvatarDataUrl(file);
+      setAvatarInput(dataUrl);
+    } catch (e) {
+      console.error("[Communauté] avatar conversion ÉCHEC:", e);
+      window.alert("Impossible de charger cette image.");
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
+  function handleLogout() {
+    if (!window.confirm("Se déconnecter ? Votre pseudo et avatar locaux seront oubliés.")) return;
+    clearForumUser();
+    setUser(null);
+    setFavorites([]);
+    setProfileMenuOpen(false);
+  }
+
+  async function handleLeaveCommunity() {
+    if (!user) return;
+    if (
+      !window.confirm(
+        "Quitter la communauté ? Vous serez retiré de tous les espaces que vous avez rejoints (vos publications restent visibles)."
+      )
+    )
+      return;
+    setLeavingCommunity(true);
+    try {
+      await leaveCommunity(user.id);
+    } finally {
+      setLeavingCommunity(false);
+      setProfileMenuOpen(false);
     }
   }
 
@@ -193,17 +329,16 @@ export default function AcademyCommunaute() {
     try {
       if (editingSpaceId) {
         console.log("[Communauté] mise à jour locale", editingSpaceId);
-        const updated = updateSpace(editingSpaceId, {
+        const patch = {
           name: trimmedName,
           description: newDesc.trim(),
           emoji: newEmoji,
           category: newCategory,
-        });
-        if (updated) {
-          setSpaces((prev) =>
-            prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s))
-          );
-        }
+        };
+        await updateSpace(editingSpaceId, patch);
+        setSpaces((prev) =>
+          prev.map((s) => (s.id === editingSpaceId ? { ...s, ...patch } : s))
+        );
       } else {
         console.log("[Communauté] création locale (localStorage) …");
         const created = await createSpace(
@@ -327,12 +462,54 @@ export default function AcademyCommunaute() {
             className="flex items-center justify-center gap-3 flex-wrap"
           >
             {user ? (
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-sm font-medium text-primary">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                  {initials(user.name)}
-                </span>
-                {user.name}
-              </div>
+              <Popover open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+                    data-testid="profile-menu-trigger"
+                  >
+                    <UserAvatar name={user.name} avatar={user.avatar} size={24} />
+                    {user.name}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="center" className="w-56 p-1.5">
+                  <div className="px-3 py-2 border-b border-border/50 mb-1">
+                    <div className="flex items-center gap-2">
+                      <UserAvatar name={user.name} avatar={user.avatar} size={32} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">{user.name}</p>
+                        <p className="text-[11px] text-muted-foreground">Profil local</p>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={openProfileEditor}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left"
+                  >
+                    <Pencil size={14} />
+                    Modifier mon profil
+                  </button>
+                  <button
+                    onClick={handleLeaveCommunity}
+                    disabled={leavingCommunity}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-left disabled:opacity-50"
+                  >
+                    {leavingCommunity ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <DoorOpen size={14} />
+                    )}
+                    Quitter la communauté
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-red-500/10 hover:text-red-400 transition-colors text-left"
+                  >
+                    <LogOut size={14} />
+                    Se déconnecter
+                  </button>
+                </PopoverContent>
+              </Popover>
             ) : (
               <button
                 onClick={() => setShowUserDialog(true)}
@@ -643,15 +820,67 @@ export default function AcademyCommunaute() {
         )}
       </div>
 
-      {/* Dialog: pseudo */}
-      <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
+      {/* Dialog: pseudo + avatar (création ou modification) */}
+      <Dialog
+        open={showUserDialog}
+        onOpenChange={(open) => {
+          setShowUserDialog(open);
+          if (!open) {
+            setEditProfileMode(false);
+            setNameInput("");
+            setAvatarInput(undefined);
+          }
+        }}
+      >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-serif">Qui êtes-vous ?</DialogTitle>
+            <DialogTitle className="font-serif">
+              {editProfileMode ? "Modifier mon profil" : "Qui êtes-vous ?"}
+            </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Choisissez un pseudo visible par toute la communauté.
+            {editProfileMode
+              ? "Mettez à jour votre pseudo et votre photo."
+              : "Choisissez un pseudo visible par toute la communauté."}
           </p>
+
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <UserAvatar name={nameInput || "?"} avatar={avatarInput} size={64} />
+              <label
+                htmlFor="avatar-input"
+                className="absolute -bottom-1 -right-1 flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 transition-colors"
+                title="Changer la photo"
+              >
+                {avatarUploading ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <Camera size={13} />
+                )}
+                <input
+                  id="avatar-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleAvatarFile(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            {avatarInput && (
+              <button
+                type="button"
+                onClick={() => setAvatarInput(undefined)}
+                className="text-xs text-muted-foreground hover:text-red-400 transition-colors"
+              >
+                Retirer la photo
+              </button>
+            )}
+          </div>
+
           <Input
             placeholder="Votre pseudo (ex : Amara K.)"
             value={nameInput}
@@ -664,7 +893,7 @@ export default function AcademyCommunaute() {
             disabled={!nameInput.trim()}
             className="w-full"
           >
-            Confirmer
+            {editProfileMode ? "Enregistrer" : "Confirmer"}
           </Button>
         </DialogContent>
       </Dialog>

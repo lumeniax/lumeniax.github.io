@@ -37,6 +37,7 @@ import {
 export interface ForumUser {
   id: string;
   name: string;
+  avatar?: string; // data URL (image redimensionnée) ou vide
 }
 
 export interface ForumSpace {
@@ -48,6 +49,7 @@ export interface ForumSpace {
   created_at: string;
   author_id?: string;
   author_name?: string;
+  author_avatar?: string;
   member_count: number;
   post_count: number;
   members: string[];
@@ -60,6 +62,7 @@ export interface ForumPost {
   body: string;
   author_id: string;
   author_name: string;
+  author_avatar?: string;
   created_at: string;
   like_count: number;
   comment_count: number;
@@ -72,6 +75,7 @@ export interface ForumComment {
   body: string;
   author_id: string;
   author_name: string;
+  author_avatar?: string;
   created_at: string;
   like_count: number;
   likes: string[];
@@ -83,6 +87,7 @@ export interface ForumReply {
   body: string;
   author_id: string;
   author_name: string;
+  author_avatar?: string;
   created_at: string;
   like_count: number;
   likes: string[];
@@ -129,12 +134,87 @@ export function getForumUser(): ForumUser | null {
   return null;
 }
 
-export function setForumUser(name: string): ForumUser {
+/**
+ * Crée ou met à jour l'utilisateur courant.
+ * - Au premier appel : génère un nouvel id
+ * - Aux appels suivants : conserve l'id existant (modification de profil)
+ */
+export function setForumUser(name: string, avatar?: string): ForumUser {
   const trimmed = name.trim() || "Anonyme";
-  const user: ForumUser = { id: uid(), name: trimmed };
+  const existing = getForumUser();
+  const user: ForumUser = {
+    id: existing?.id ?? uid(),
+    name: trimmed,
+    avatar: avatar !== undefined ? avatar : existing?.avatar,
+  };
   _user = user;
   safeSet(USER_KEY, JSON.stringify(user));
   return user;
+}
+
+/**
+ * Déconnexion locale : oublie le pseudo, l'avatar et les favoris.
+ * Les contributions déjà publiées restent (elles ne dépendent pas du
+ * stockage local).
+ */
+export function clearForumUser(): void {
+  _user = null;
+  _favorites = null;
+  try {
+    sessionStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(FAVORITES_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Met à jour l'identité (nom + avatar) sur l'ensemble des contributions
+ * (espaces créés, posts, commentaires, réponses) appartenant à cet utilisateur.
+ * Optionnel : facilite l'affichage cohérent du nom courant partout.
+ */
+export async function updateProfileEverywhere(user: ForumUser): Promise<void> {
+  const patch: DocumentData = { author_name: user.name };
+  if (user.avatar !== undefined) patch.author_avatar = user.avatar ?? null;
+  const collections = [SPACES, POSTS, COMMENTS, REPLIES] as const;
+  for (const col of collections) {
+    try {
+      const snap = await getDocs(
+        query(collection(db, col), where("author_id", "==", user.id))
+      );
+      for (const d of snap.docs) {
+        await updateDoc(d.ref, patch).catch(() => {});
+      }
+    } catch (e) {
+      console.error(`[useForum] updateProfileEverywhere ${col} ÉCHEC:`, e);
+    }
+  }
+}
+
+/**
+ * Quitte tous les espaces de la communauté pour cet utilisateur.
+ * (Ne supprime pas les contenus publiés.)
+ */
+export async function leaveCommunity(userId: string): Promise<number> {
+  let count = 0;
+  try {
+    const snap = await getDocs(collection(db, SPACES));
+    for (const d of snap.docs) {
+      const members: string[] = Array.isArray(d.data().members)
+        ? d.data().members
+        : [];
+      if (members.includes(userId)) {
+        await updateDoc(d.ref, {
+          members: arrayRemove(userId),
+          member_count: increment(-1),
+        }).catch(() => {});
+        count++;
+      }
+    }
+  } catch (e) {
+    console.error("[useForum] leaveCommunity ÉCHEC:", e);
+  }
+  return count;
 }
 
 export function getFavoriteSpaces(): string[] {
@@ -196,6 +276,7 @@ function mapSpace(d: QueryDocumentSnapshot<DocumentData>): ForumSpace {
     created_at: tsToIso(data.created_at ?? data.createdAt),
     author_id: data.author_id,
     author_name: data.author_name,
+    author_avatar: data.author_avatar ?? undefined,
     members,
     member_count:
       typeof data.member_count === "number" ? data.member_count : members.length,
@@ -213,6 +294,7 @@ function mapPost(d: QueryDocumentSnapshot<DocumentData>): ForumPost {
     body: data.body ?? "",
     author_id: data.author_id ?? "",
     author_name: data.author_name ?? "",
+    author_avatar: data.author_avatar ?? undefined,
     created_at: tsToIso(data.created_at ?? data.createdAt),
     likes,
     like_count:
@@ -231,6 +313,7 @@ function mapComment(d: QueryDocumentSnapshot<DocumentData>): ForumComment {
     body: data.body ?? "",
     author_id: data.author_id ?? "",
     author_name: data.author_name ?? "",
+    author_avatar: data.author_avatar ?? undefined,
     created_at: tsToIso(data.created_at ?? data.createdAt),
     likes,
     like_count:
@@ -247,6 +330,7 @@ function mapReply(d: QueryDocumentSnapshot<DocumentData>): ForumReply {
     body: data.body ?? "",
     author_id: data.author_id ?? "",
     author_name: data.author_name ?? "",
+    author_avatar: data.author_avatar ?? undefined,
     created_at: tsToIso(data.created_at ?? data.createdAt),
     likes,
     like_count:
@@ -302,6 +386,7 @@ export const createSpace = async (
     created_at: serverTimestamp(),
     author_id: author.id,
     author_name: author.name,
+    author_avatar: author.avatar ?? null,
     members: [author.id],
     member_count: 1,
     post_count: 0,
@@ -317,6 +402,7 @@ export const createSpace = async (
     created_at: new Date().toISOString(),
     author_id: author.id,
     author_name: author.name,
+    author_avatar: author.avatar,
     members: [author.id],
     member_count: 1,
     post_count: 0,
@@ -452,6 +538,7 @@ export const createPost = async (
     body: data.body,
     author_id: author.id,
     author_name: author.name,
+    author_avatar: author.avatar ?? null,
     created_at: serverTimestamp(),
     likes: [] as string[],
     like_count: 0,
@@ -471,6 +558,7 @@ export const createPost = async (
     body: data.body,
     author_id: author.id,
     author_name: author.name,
+    author_avatar: author.avatar,
     created_at: new Date().toISOString(),
     likes: [],
     like_count: 0,
@@ -585,6 +673,7 @@ export const createComment = async (
     body: data.body,
     author_id: author.id,
     author_name: author.name,
+    author_avatar: author.avatar ?? null,
     created_at: serverTimestamp(),
     likes: [] as string[],
     like_count: 0,
@@ -599,6 +688,7 @@ export const createComment = async (
     body: data.body,
     author_id: author.id,
     author_name: author.name,
+    author_avatar: author.avatar,
     created_at: new Date().toISOString(),
     likes: [],
     like_count: 0,
@@ -744,6 +834,7 @@ export const createReply = async (
     body: data.body,
     author_id: author.id,
     author_name: author.name,
+    author_avatar: author.avatar ?? null,
     created_at: serverTimestamp(),
     likes: [] as string[],
     like_count: 0,
@@ -755,6 +846,7 @@ export const createReply = async (
     body: data.body,
     author_id: author.id,
     author_name: author.name,
+    author_avatar: author.avatar,
     created_at: new Date().toISOString(),
     likes: [],
     like_count: 0,

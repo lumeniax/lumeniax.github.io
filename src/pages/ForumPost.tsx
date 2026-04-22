@@ -42,13 +42,20 @@ import {
   getForumUser,
   setForumUser,
   relTime,
-  initials,
-  avatarColor,
   type ForumPost,
   type ForumComment,
   type ForumReply,
   type ForumUser,
 } from "@/hooks/useForum";
+import { UserAvatar } from "@/pages/AcademyCommunaute";
+
+function postExcerpt(p: ForumPost): string {
+  if (p.title && p.title.trim()) return p.title;
+  const firstLine = (p.body || "").split("\n")[0].trim();
+  return firstLine.length > 80
+    ? firstLine.slice(0, 80) + "…"
+    : firstLine || "Publication";
+}
 
 export default function ForumPost() {
   const params = useParams<{ spaceId: string; postId: string }>();
@@ -423,7 +430,7 @@ export default function ForumPost() {
           </Link>
           <span>/</span>
           <span className="text-foreground/70 truncate max-w-[200px]">
-            {post.title}
+            {postExcerpt(post)}
           </span>
         </div>
 
@@ -435,9 +442,11 @@ export default function ForumPost() {
           className="p-8 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card mb-10"
         >
           <div className="flex items-center gap-3 mb-4">
-            <span className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 text-primary text-sm font-bold">
-              {initials(post.author_name)}
-            </span>
+            <UserAvatar
+              name={post.author_name}
+              avatar={post.author_avatar}
+              size={36}
+            />
             <div>
               <p className="text-sm font-semibold">{post.author_name}</p>
               <p className="text-xs text-muted-foreground">
@@ -445,9 +454,11 @@ export default function ForumPost() {
               </p>
             </div>
           </div>
-          <h1 className="text-2xl md:text-3xl font-serif font-medium mb-4 leading-snug">
-            {post.title}
-          </h1>
+          {post.title && post.title.trim() && (
+            <h1 className="text-2xl md:text-3xl font-serif font-medium mb-4 leading-snug">
+              {post.title}
+            </h1>
+          )}
           <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap mb-6">
             {post.body}
           </p>
@@ -507,9 +518,7 @@ export default function ForumPost() {
         <div className="mb-8 p-5 rounded-2xl border border-border/50 bg-card/60">
           {user ? (
             <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                {initials(user.name)}
-              </span>
+              <UserAvatar name={user.name} avatar={user.avatar} size={28} />
               Commenter en tant que{" "}
               <span className="font-semibold text-foreground">{user.name}</span>
             </div>
@@ -572,13 +581,11 @@ export default function ForumPost() {
                 className="p-5 rounded-2xl border border-border/50 bg-card"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <span
-                    className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold ${avatarColor(
-                      cmt.author_name
-                    )}`}
-                  >
-                    {initials(cmt.author_name)}
-                  </span>
+                  <UserAvatar
+                    name={cmt.author_name}
+                    avatar={cmt.author_avatar}
+                    size={32}
+                  />
                   <div className="flex-1">
                     <p className="text-sm font-semibold">{cmt.author_name}</p>
                     <p className="text-xs text-muted-foreground">
@@ -744,13 +751,11 @@ export default function ForumPost() {
                               size={11}
                               className="text-muted-foreground/60"
                             />
-                            <span
-                              className={`flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold ${avatarColor(
-                                r.author_name
-                              )}`}
-                            >
-                              {initials(r.author_name)}
-                            </span>
+                            <UserAvatar
+                              name={r.author_name}
+                              avatar={r.author_avatar}
+                              size={24}
+                            />
                             <p className="text-xs font-semibold">
                               {r.author_name}
                             </p>
