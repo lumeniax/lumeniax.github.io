@@ -6,9 +6,7 @@
   "scripts": {
     "manifest": "node scripts/generate-manifest.js",
     "predev": "node scripts/generate-manifest.js",
-    "dev": "concurrently -k -n api,web -c blue,green \"node server/index.js\" \"vite\"",
-    "server": "node server/index.js",
-    "dev:all": "node server/index.js & sleep 2 && npm run dev",
+    "dev": "vite",
     "prebuild": "node scripts/generate-manifest.js",
     "build": "vite build",
     "postbuild": "cp dist/index.html dist/404.html",
