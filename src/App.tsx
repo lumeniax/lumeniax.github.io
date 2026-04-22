@@ -20,6 +20,7 @@ import AcademyVideos from "@/pages/AcademyVideos";
 import AcademyCommunaute from "@/pages/AcademyCommunaute";
 import ForumSpace from "@/pages/ForumSpace";
 import ForumPost from "@/pages/ForumPost";
+import Community from "@/pages/Community";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import MentionsLegales from "@/pages/MentionsLegales";
@@ -48,7 +49,8 @@ function Router() {
         <Route path="/academy/formations/:slug" component={FormationDetail} />
         <Route path="/academy/videos" component={AcademyVideos} />
 
-        {/* Community Forum */}
+        {/* Community */}
+        <Route path="/community" component={Community} />
         <Route path="/academy/communaute" component={AcademyCommunaute} />
         <Route path="/academy/communaute/:spaceId" component={ForumSpace} />
         <Route path="/academy/communaute/:spaceId/:postId" component={ForumPost} />
