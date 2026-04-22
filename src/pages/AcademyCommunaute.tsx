@@ -171,8 +171,21 @@ export default function AcademyCommunaute() {
     setFavorites(getFavoriteSpaces());
   }
 
-  async function submitSpace() {
-    if (!newName.trim()) return;
+  async function submitSpace(ev?: React.SyntheticEvent) {
+    if (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
+    console.log("[Communauté] submitSpace appelé", {
+      newName,
+      newCategory,
+      newEmoji,
+    });
+    const trimmedName = newName.trim();
+    if (!trimmedName) {
+      console.warn("[Communauté] nom vide, abandon");
+      return;
+    }
     let u = getForumUser();
     if (!u) {
       u = setForumUser("Anonyme");
@@ -181,15 +194,17 @@ export default function AcademyCommunaute() {
     setError(null);
     setSaving(true);
     try {
+      console.log("[Communauté] POST /api/forum/spaces …");
       const created = await createSpace(
         {
-          name: newName.trim(),
+          name: trimmedName,
           description: newDesc.trim(),
           emoji: newEmoji,
           category: newCategory,
         },
         u
       );
+      console.log("[Communauté] espace créé:", created);
       setSpaces((prev) => [created, ...prev.filter((s) => s.id !== created.id)]);
       setNewName("");
       setNewDesc("");
@@ -198,15 +213,10 @@ export default function AcademyCommunaute() {
       setShowSpaceDialog(false);
       loadSpaces(true);
     } catch (e: any) {
-      console.error("createSpace failed:", e);
-      const detail =
-        e?.message && !/^HTTP\s/i.test(e.message)
-          ? ` (${e.message})`
-          : e?.message
-            ? ` (${e.message})`
-            : "";
-      setError(
-        `Impossible de créer l'espace${detail}. Vérifiez que le serveur API est bien démarré.`
+      console.error("[Communauté] createSpace ÉCHEC:", e);
+      const msg = e?.message || "Erreur inconnue";
+      window.alert(
+        `Impossible de créer l'espace : ${msg}\n\nVérifiez que le serveur API est démarré (npm run dev).`
       );
     } finally {
       setSaving(false);
@@ -602,7 +612,13 @@ export default function AcademyCommunaute() {
           <DialogHeader>
             <DialogTitle className="font-serif">Créer un espace</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitSpace(e);
+            }}
+          >
             <div>
               <p className="text-xs text-muted-foreground mb-2">Icône</p>
               <div className="flex flex-wrap gap-2">
@@ -653,18 +669,18 @@ export default function AcademyCommunaute() {
               rows={2}
               maxLength={150}
             />
-            <Button
-              onClick={submitSpace}
+            <button
+              type="submit"
               disabled={!newName.trim() || saving}
-              className="w-full"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground text-sm font-medium h-10 px-4 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {saving ? (
                 <Loader2 className="animate-spin" size={16} />
               ) : (
                 "Créer l'espace"
               )}
-            </Button>
-          </div>
+            </button>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
