@@ -194,7 +194,7 @@ export default function AcademyCommunaute() {
     setError(null);
     setSaving(true);
     try {
-      console.log("[Communauté] POST /api/forum/spaces …");
+      console.log("[Communauté] création locale (localStorage) …");
       const created = await createSpace(
         {
           name: trimmedName,
@@ -215,9 +215,7 @@ export default function AcademyCommunaute() {
     } catch (e: any) {
       console.error("[Communauté] createSpace ÉCHEC:", e);
       const msg = e?.message || "Erreur inconnue";
-      window.alert(
-        `Impossible de créer l'espace : ${msg}\n\nVérifiez que le serveur API est démarré (npm run dev).`
-      );
+      window.alert(`Impossible de créer l'espace : ${msg}`);
     } finally {
       setSaving(false);
     }
