@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "@/lib/animations";
 import { Link, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { ArticleInteractions } from "@/components/ArticleInteractions";
+import { ArticleComments } from "@/components/ArticleComments";
 import { AuthorSignature } from "@/components/AuthorSignature";
 
 interface ArticleMeta {
@@ -27,6 +28,7 @@ export default function ArticleDetail() {
   const [content, setContent] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const commentsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -147,10 +149,14 @@ export default function ArticleDetail() {
             </motion.p>
           )}
 
-          {/* Interactions d'article */}
-          <ArticleInteractions 
+          {/* Interactions d'article (likes temps réel) */}
+          <ArticleInteractions
+            articleId={slug}
             articleTitle={meta.title}
             articleUrl={articleUrl}
+            onCommentClick={() =>
+              commentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
           />
 
           {/* Signature de l'auteur */}
@@ -159,6 +165,11 @@ export default function ArticleDetail() {
             date={meta.date}
             category={meta.category}
           />
+
+          {/* Commentaires temps réel */}
+          <div ref={commentsRef}>
+            <ArticleComments articleId={slug} articleTitle={meta.title} />
+          </div>
 
           <motion.div
             variants={fadeUp}
