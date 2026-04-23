@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "@/lib/animations";
 import { Link, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { ArticleInteractions } from "@/components/ArticleInteractions";
 import { ArticleComments } from "@/components/ArticleComments";
 import { AuthorSignature } from "@/components/AuthorSignature";
@@ -107,16 +106,6 @@ export default function ArticleDetail() {
           animate="visible"
           variants={staggerContainer}
         >
-          <Link href="/academy/articles">
-            <motion.button
-              variants={fadeUp}
-              className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-8"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Retour aux articles
-            </motion.button>
-          </Link>
-
           <motion.div variants={fadeUp} className="flex items-center gap-2 text-sm text-primary font-medium mb-4">
             <span>{meta.icon}</span>
             <span>{meta.category}</span>
