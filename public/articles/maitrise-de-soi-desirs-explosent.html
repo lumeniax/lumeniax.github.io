@@ -1,263 +1,163 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Pourquoi votre autocontrôle s'effondre dès que vous êtes seul ? Décryptage des mécanismes du refoulement et clés pour transformer vos pulsions en force constructive."/>
+  <meta name="lumenia:title" content="Maîtrise de soi : pourquoi vos désirs explosent quand personne ne regarde"/>
+  <meta name="lumenia:category" content="Développement personnel"/>
+  <meta name="lumenia:date" content="23 avril 2026"/>
+  <meta name="lumenia:icon" content="🧠"/>
+  <title>Maîtrise de soi : pourquoi vos désirs explosent - Lumenia</title>
 
-  <title>Maîtrise de soi : pourquoi vos désirs explosent quand personne ne regarde - Lumenia</title>
-  <meta name="description" content="Découvrez pourquoi votre autocontrôle s'effondre en privé et comment transformer vos pulsions en force constructive.">
-
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0b1220;
-      color: #e5e7eb;
-      line-height: 1.7;
-    }
-
-    /* NAV */
-    .nav {
-      display: flex;
-      justify-content: space-between;
-      padding: 15px 30px;
-      background: #0f172a;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .nav a {
-      color: #cbd5e1;
-      margin: 0 10px;
-      text-decoration: none;
-      font-size: 14px;
-    }
-
-    .nav a:hover {
-      color: white;
-    }
-
-    /* HERO */
-    .hero {
-      display: flex;
-      flex-wrap: wrap;
-      padding: 60px 10%;
-      align-items: center;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-    }
-
-    .hero-text {
-      flex: 1;
-      min-width: 300px;
-    }
-
-    .hero-text h1 {
-      font-size: 2.5rem;
-      margin-bottom: 10px;
-    }
-
-    .hero-text p {
-      color: #94a3b8;
-    }
-
-    .hero img {
-      flex: 1;
-      max-width: 450px;
-      border-radius: 12px;
-    }
-
-    /* CONTAINER */
-    .container {
-      width: 80%;
-      margin: auto;
-      padding: 40px 0;
-    }
-
-    .meta {
-      color: #94a3b8;
-      font-size: 13px;
-      margin-bottom: 20px;
-    }
-
-    /* SECTION */
-    .section {
-      display: flex;
-      flex-wrap: wrap;
-      margin: 50px 0;
-      gap: 30px;
-      align-items: center;
-    }
-
-    .section img {
-      width: 450px;
-      border-radius: 12px;
-    }
-
-    .section-text {
-      flex: 1;
-      min-width: 280px;
-    }
-
-    h2 {
-      color: #60a5fa;
-      margin-bottom: 10px;
-    }
-
-    blockquote {
-      background: #111827;
-      padding: 15px;
-      border-left: 4px solid #3b82f6;
-      margin: 20px 0;
-      font-style: italic;
-    }
-
-    /* FOOTER */
-    footer {
-      text-align: center;
-      padding: 40px;
-      color: #64748b;
-      background: #0f172a;
-      margin-top: 50px;
-    }
-
-    @media(max-width: 900px) {
-      .hero, .section {
-        flex-direction: column;
-      }
-
-      .container {
-        width: 90%;
-      }
-
-      .section img {
-        width: 100%;
-      }
-    }
-  </style>
+  <link rel="icon" type="image/svg+xml" href="/attached_assets/lumenia-icon.svg"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/css/lumenia.css"/>
 </head>
 
 <body>
 
-  <!-- NAVIGATION -->
-  <div class="nav">
-    <div><strong>Lumenia</strong></div>
-    <div>
-      <a href="#">Articles</a>
-      <a href="#">Formations</a>
-      <a href="#">Vidéos</a>
-      <a href="#">Communauté</a>
-      <a href="#">À propos</a>
-      <a href="#">Contact</a>
-    </div>
+<header class="site-header">
+  <a class="logo" href="/">
+    <img src="/attached_assets/lumenia-icon.svg"/>
+    <span class="logo-text">Lumenia</span>
+  </a>
+  <nav class="site-nav">
+    <a href="/articles">Articles</a>
+    <a href="/formations">Formations</a>
+    <a href="/videos">Vidéos</a>
+    <a href="/communaute">Communauté</a>
+    <a href="/a-propos">À propos</a>
+    <a href="/contact">Contact</a>
+  </nav>
+  <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<div class="mobile-menu" id="mobile-menu">
+  <a href="/">Accueil</a>
+  <a href="/articles">Articles</a>
+  <a href="/formations">Formations</a>
+  <a href="/videos">Vidéos</a>
+  <a href="/communaute">Communauté</a>
+  <a href="/a-propos">À propos</a>
+  <a href="/contact">Contact</a>
+  <a href="/contact" class="m-cta">Newsletter</a>
+</div>
+
+<div class="article-header">
+  <div class="article-meta">
+    <span class="tag">Développement personnel</span>
+    <span class="article-date">23 avril 2026</span>
+    <span class="article-read">· ~9 min de lecture</span>
   </div>
+  <h1>Maîtrise de soi : pourquoi vos désirs explosent quand personne ne regarde</h1>
+  <p class="article-intro">Découvrez pourquoi votre autocontrôle s'effondre en privé et comment transformer vos pulsions destructrices en force constructive.</p>
+</div>
 
-  <!-- HERO -->
-  <div class="hero">
+<div class="article-body">
 
-    <div class="hero-text">
-      <div class="meta">Développement personnel • 23 avril 2026 • ~9 min</div>
-      <h1>Maîtrise de soi : pourquoi vos désirs explosent quand personne ne regarde</h1>
-      <p>
-        Découvrez pourquoi votre autocontrôle s'effondre en privé et comment transformer vos pulsions destructrices en force constructive.
-      </p>
-    </div>
+  <a class="back-link" href="/articles">← Retour aux articles</a>
 
-    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f" alt="réflexion solitude">
+  <figure style="margin: 2rem 0; text-align: center;">
+    <img src="https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&q=80&w=1200" alt="Silhouette d'une personne seule face à une fenêtre dans la pénombre" style="width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+    <figcaption style="font-style: italic; color: #666; margin-top: 10px;">Dans l'intimité, nos masques tombent — et nos pulsions se révèlent.</figcaption>
+  </figure>
 
-  </div>
+  <p>La maîtrise de soi s'évapore mystérieusement dès que nous nous retrouvons seuls. Alors que nous affichons un contrôle parfait en société, nos désirs refoulés explosent dans l'intimité. Cette dualité révèle un mécanisme troublant : quand le désir s'emballe et qu'un verre de vin en appelle automatiquement un deuxième, puis un troisième, sans pouvoir résister à l'appel de la jouissance, on parle de compulsion. Les désirs peuvent devenir tellement forts qu'ils prennent le dessus sur la raison, surtout lorsque le regard des autres disparaît.</p>
 
-  <div class="container">
+  <h2>Pourquoi la maîtrise de soi s'effondre dans la solitude</h2>
 
-    <p>
-      La maîtrise de soi s'évapore mystérieusement dès que nous nous retrouvons seuls. Alors que nous affichons un contrôle parfait en société,
-      nos désirs refoulés explosent dans l'intimité. Cette dualité révèle un mécanisme profond du comportement humain.
-    </p>
+  <h3>Le paradoxe de l'autocontrôle social</h3>
+  <p>Le contrôle social informel représente toute réaction qu'un individu manifeste pour désapprouver un comportement qui s'écarte d'une norme. Cette régulation par les pairs varie considérablement selon les situations. Les interventions face aux comportements déviants fluctuent de <strong>18 à 80 %</strong> selon les contextes. Le sentiment d'implication personnelle joue un rôle déterminant : on sanctionne davantage lorsqu'on se sent concerné par la transgression.</p>
 
-    <!-- SECTION 1 -->
-    <div class="section">
-      <div class="section-text">
-        <h2>Pourquoi la maîtrise de soi s'effondre dans la solitude</h2>
-        <p>
-          Le contrôle social disparaît lorsque personne ne nous observe. Sans regard extérieur, la pression normative s’effondre.
-        </p>
-        <p>
-          Nous cessons alors d’anticiper le jugement des autres, ce qui diminue fortement notre autocensure.
-        </p>
+  <p>Lorsque vous êtes seul face à un acte déviant, la responsabilité d'intervenir vous incombe totalement. Paradoxalement, cette pression sociale externe qui vous pousse à respecter les normes en public disparaît dans la solitude. La maîtrise de soi devient alors une affaire purement personnelle, sans témoin pour valider vos efforts.</p>
+
+  <h3>Quand le regard des autres disparaît</h3>
+  <p>Le regard des autres influence profondément nos comportements quotidiens. Il détermine ce que nous osons dire ou faire, mais aussi ce que nous évitons par crainte du jugement. Cette influence repose sur des anticipations : ce que nous pensons que les autres vont penser, ce que nous imaginons qu'ils attendent. Dès l'enfance, nous nous construisons grâce au regard de l'autre comme un miroir qui confirme ou infirme nos ressentis intérieurs.</p>
+
+  <p>Anticiper le regard des autres exige un effort constant pour imaginer les réactions possibles et ajuster votre comportement. Cette activité mentale permanente alourdit votre charge cognitive. En l'absence de ce regard scrutateur, vous cessez d'alimenter cette surveillance interne et vos défenses s'abaissent naturellement.</p>
+
+  <h3>La fatigue décisionnelle qui affaiblit votre volonté</h3>
+  <p>Un adulte prend en moyenne <strong>35 000 décisions par jour</strong>, soit environ 2 000 décisions par heure pendant ses heures d'éveil. Chaque choix puise dans un réservoir limité de ressources cognitives. La volonté fonctionne comme un muscle qui se fatigue. Cette théorie de l'épuisement de l'ego révèle que chaque effort de contrôle émotionnel vide une réserve de volonté.</p>
+
+  <p>Les preuves sont frappantes : <strong>86 % des participants</strong> n'ayant pas été contraints de maîtriser leurs émotions font preuve d'entraide, contre seulement <strong>41 %</strong> de ceux qui ont dû se contenir. La fatigue décisionnelle réduit votre contrôle de soi car ces deux fonctions partagent les mêmes ressources mentales. Vous résistez aux tentations toute la journée mais craquez le soir précisément pour cette raison.</p>
+
+  <figure style="margin: 2.5rem 0; text-align: center;">
+    <img src="https://images.unsplash.com/photo-1551845728-6820a30c64e5?auto=format&fit=crop&q=80&w=1200" alt="Verre de vin rouge dans une ambiance feutrée et tamisée" style="width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+    <figcaption style="font-style: italic; color: #666; margin-top: 10px;">Un verre en appelle un autre — la compulsion commence là où la lucidité s'arrête.</figcaption>
+  </figure>
+
+  <h2>Comment vos désirs refoulés se transforment en bombes à retardement</h2>
+
+  <h3>Les mécanismes psychologiques du refoulement</h3>
+  <p>Le refoulement constitue un processus psychique inconscient qui repousse et maintient hors du conscient des pensées, des images, des souvenirs et des émotions jugés inacceptables par le moi. Ce mécanisme de défense se met en place pour nous protéger contre la culpabilité, la souffrance et le mauvais jugement sur nous-mêmes. Contrairement à ce que nous croyons, ce processus n'est pas volontaire : il s'opère inconsciemment pour protéger notre psychisme d'un conflit interne insupportable.</p>
+
+  <p>Le psychisme fonctionne comme un iceberg. La partie visible représente notre esprit conscient, la zone submergée mais encore visible correspond au préconscient, tandis que la majeure partie invisible constitue l'inconscient qui exerce un impact très puissant sur notre personnalité. Ce qui est refoulé ne peut pas être vécu par le moi.</p>
+
+  <h3>La pression accumulée cherche une sortie</h3>
+  <p>Le refoulement n'est jamais définitif. Les contenus refoulés exercent une pression constante pour revenir à la conscience. Maintenir le refoulement demande un effort psychique permanent appelé <strong>« contre-investissement »</strong> : une partie de notre énergie mentale est continuellement mobilisée pour garder ces contenus hors de portée de la conscience. Plus les refoulements sont nombreux et importants, plus cette dépense énergétique est élevée, ce qui conduit à la fatigue psychique.</p>
+
+  <blockquote>« Ce que vous refusez de regarder en vous finit toujours par vous gouverner depuis l'ombre. »</blockquote>
+
+  <h3>Du désir légitime à la compulsion destructrice</h3>
+  <p>Lorsque le refoulement devient trop important, il se traduit par un comportement excessif de mise en danger : certaines addictions bouleversent le quotidien et, poussées à leur extrême, deviennent dangereuses. Les symptômes apparaissent — angoisses, phobies et obsessions — qui représentent un compromis entre le désir refoulé et l'interdit. Les troubles obsessionnels compulsifs sont souvent en rapport direct avec le refoulement.</p>
+
+  <figure style="margin: 2.5rem 0; text-align: center;">
+    <img src="https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&q=80&w=1200" alt="Vague d'énergie lumineuse traversant l'obscurité" style="width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+    <figcaption style="font-style: italic; color: #666; margin-top: 10px;">Ce que vous refoulez s'accumule, jusqu'à ce que la pression devienne explosion.</figcaption>
+  </figure>
+
+  <h2>La maîtrise de soi selon les sagesses anciennes et modernes</h2>
+
+  <h3>La tempérance face aux tentations</h3>
+  <p>La tempérance dépasse la simple modération alimentaire. Elle consiste à modérer toutes nos réactions face aux désirs et aux peurs quotidiennes. Cela signifie apprendre à dire non à la colère, à l'envie, à l'excès de travail et même à l'excès d'oisiveté. Face à une situation difficile, elle nous invite à faire une pause, réfléchir et choisir consciemment notre réaction. En cultivant la tempérance, nous développons la capacité à résister aux tentations et à orienter notre énergie vers ce qui compte vraiment.</p>
+
+  <h3>Enseignements spirituels sur la maîtrise de soi</h3>
+  <p>Les textes spirituels offrent de multiples éclairages sur la maîtrise de soi. Ils mettent en avant la capacité à se contrôler comme une force supérieure à la puissance extérieure. La maîtrise de soi est présentée comme une protection intérieure, une discipline qui permet de rester stable face aux turbulences de la vie.</p>
+
+  <h3>Transformer ses désirs plutôt que les réprimer</h3>
+  <p>La transformation des désirs est plus efficace que leur suppression. Réorienter ses désirs vers des objectifs atteignables permet d'éviter la frustration permanente. La <strong>sublimation</strong> transforme des impulsions brutes en actions constructives, permettant de s'adapter à la réalité sans renoncer à ses forces internes.</p>
+
+  <figure style="margin: 2.5rem 0; text-align: center;">
+    <img src="https://images.unsplash.com/photo-1499728603263-13726abce5fd?auto=format&fit=crop&q=80&w=1200" alt="Personne méditant face à une montagne au lever du soleil" style="width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+    <figcaption style="font-style: italic; color: #666; margin-top: 10px;">La tempérance n'est pas une cage : c'est un chemin vers la souveraineté de soi.</figcaption>
+  </figure>
+
+  <h2>Reconnaître vos vrais désirs</h2>
+
+  <h3>Les désirs authentiques</h3>
+  <p>Le désir authentique se distingue de la pulsion par sa profondeur et sa durabilité. Les pulsions visent la satisfaction immédiate, tandis que les désirs profonds s'inscrivent dans une vision plus large. Nos désirs véritables sont souvent cachés sous des couches de désirs superficiels.</p>
+
+  <h3>Distinguer besoin et imitation</h3>
+  <p>Beaucoup de désirs ne sont pas réellement les nôtres. Ils sont influencés par les autres, par la société, par ce que nous voyons et admirons. Apprendre à faire la différence entre un besoin réel et un désir imité est essentiel pour retrouver le contrôle de soi.</p>
+
+  <h3>Quand céder devient lucide</h3>
+  <p>Céder à un désir peut parfois être un acte conscient plutôt qu'une faiblesse. Comprendre ses désirs permet de mieux les gérer. Les observer, les analyser et les orienter est plus efficace que les combattre aveuglément.</p>
+
+  <h2>Conclusion</h2>
+  <p>La maîtrise de soi ne consiste pas à étouffer nos désirs mais à les comprendre et les transformer. Le regard des autres peut masquer nos faiblesses, mais seule la lucidité personnelle permet un véritable contrôle. La vraie maîtrise commence par une compréhension profonde de soi-même.</p>
+
+  <a class="back-to-top" href="#top">↑ Haut de page</a>
+
+</div>
+
+<div class="article-footer">
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a class="logo" href="/">
+          <img src="/attached_assets/lumenia-icon.svg"/>
+          <span class="logo-text">Lumenia</span>
+        </a>
+        <p>Votre source quotidienne de lumière, de savoir et d'inspiration.</p>
       </div>
-
-      <img src="https://images.unsplash.com/photo-1511988617509-a57c8a288659" alt="solitude réflexion">
     </div>
-
-    <!-- SECTION 2 -->
-    <div class="section">
-      <img src="https://images.unsplash.com/photo-1521790366324-39b3c5c5f2d0" alt="fatigue mentale">
-
-      <div class="section-text">
-        <h2>La fatigue décisionnelle qui affaiblit votre volonté</h2>
-        <p>
-          Chaque jour, nous prenons des milliers de décisions. Cette surcharge épuise notre énergie mentale.
-        </p>
-
-        <p>
-          Le soir, la volonté est plus faible, ce qui explique les comportements impulsifs.
-        </p>
-      </div>
-    </div>
-
-    <!-- SECTION 3 -->
-    <div class="section">
-      <div class="section-text">
-        <h2>Quand les désirs refoulés deviennent dangereux</h2>
-        <p>
-          Ce que nous refoulons ne disparaît pas. Cela s’accumule jusqu’à chercher une sortie.
-        </p>
-
-        <blockquote>
-          “Ce que vous refusez de regarder en vous finit toujours par vous gouverner depuis l’ombre.”
-        </blockquote>
-      </div>
-
-      <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee" alt="pression mentale volcan">
-    </div>
-
-    <!-- SECTION 4 -->
-    <div class="section">
-      <img src="https://images.unsplash.com/photo-1506784365847-bbad939e9335" alt="calme méditation">
-
-      <div class="section-text">
-        <h2>Transformer ses désirs plutôt que les réprimer</h2>
-        <p>
-          La vraie maîtrise de soi ne consiste pas à supprimer les désirs, mais à les transformer en énergie constructive.
-        </p>
-        <p>
-          La sublimation permet de canaliser les pulsions vers des objectifs positifs.
-        </p>
-      </div>
-    </div>
-
-    <!-- CONCLUSION -->
-    <div class="section">
-      <div class="section-text">
-        <h2>Conclusion</h2>
-        <p>
-          La maîtrise de soi ne consiste pas à étouffer nos désirs mais à les comprendre et les transformer.
-        </p>
-        <p>
-          La véritable force commence lorsque nous devenons lucides sur nous-mêmes, même sans le regard des autres.
-        </p>
-      </div>
-
-      <img src="https://images.unsplash.com/photo-1499209974431-9dddcece7f88" alt="lever soleil liberté">
-    </div>
-
-  </div>
-
-  <footer>
-    <p><strong>Lumenia</strong> — Votre source quotidienne de lumière, de savoir et d’inspiration</p>
-    <p>© 2026</p>
+    <div class="footer-bottom">© 2026 Lumenia</div>
   </footer>
+</div>
 
+<script src="/js/lumenia.js"></script>
 </body>
 </html>
