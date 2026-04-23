@@ -4,6 +4,8 @@ import { fadeUp, staggerContainer } from "@/lib/animations";
 import { Link, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { ArticleInteractions } from "@/components/ArticleInteractions";
+import { AuthorSignature } from "@/components/AuthorSignature";
 
 interface ArticleMeta {
   title: string;
@@ -93,6 +95,8 @@ export default function ArticleDetail() {
     );
   }
 
+  const articleUrl = `/academy/articles/${slug}`;
+
   return (
     <div className="w-full pt-32 pb-20">
       <div className="container mx-auto px-6 md:px-12 max-w-3xl">
@@ -142,6 +146,19 @@ export default function ArticleDetail() {
               Contenu non disponible.
             </motion.p>
           )}
+
+          {/* Interactions d'article */}
+          <ArticleInteractions 
+            articleTitle={meta.title}
+            articleUrl={articleUrl}
+          />
+
+          {/* Signature de l'auteur */}
+          <AuthorSignature 
+            authorName="Messan Salem ADIGUIDI"
+            date={meta.date}
+            category={meta.category}
+          />
 
           <motion.div
             variants={fadeUp}
