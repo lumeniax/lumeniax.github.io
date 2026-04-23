@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Heart, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   doc,
@@ -19,13 +19,15 @@ interface ArticleInteractionsProps {
   articleTitle: string;
   articleUrl: string;
   onCommentClick?: () => void;
+  shareSlot?: ReactNode;
 }
 
 export function ArticleInteractions({
   articleId,
   articleTitle,
-  articleUrl,
+  articleUrl: _articleUrl,
   onCommentClick,
+  shareSlot,
 }: ArticleInteractionsProps) {
   const [likes, setLikes] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -77,31 +79,6 @@ export function ArticleInteractions({
     }
   };
 
-  const handleShare = async () => {
-    const fullUrl = `${window.location.origin}${articleUrl}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: articleTitle,
-          text: `Découvrez cet article: ${articleTitle}`,
-          url: fullUrl,
-        });
-        return;
-      } catch (err) {
-        if ((err as Error).name === "AbortError") return;
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(fullUrl);
-      toast({
-        title: "Lien copié",
-        description: "Le lien de l'article a été copié dans le presse-papiers.",
-      });
-    } catch (err) {
-      console.error("[share] clipboard error", err);
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -142,17 +119,8 @@ export function ArticleInteractions({
           <span className="text-sm font-medium">Commenter</span>
         </motion.button>
 
-        {/* Bouton Partager */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleShare}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/50 text-foreground/70 border border-primary/20 hover:bg-primary/10 hover:text-primary transition-all duration-300"
-          title="Partager cet article"
-        >
-          <Share2 size={18} />
-          <span className="text-sm font-medium">Partager</span>
-        </motion.button>
+        {/* Bouton Partager (slot personnalisable depuis le parent) */}
+        {shareSlot}
       </div>
     </motion.div>
   );

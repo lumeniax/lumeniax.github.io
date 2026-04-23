@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { ArticleInteractions } from "@/components/ArticleInteractions";
 import { ArticleComments } from "@/components/ArticleComments";
 import { AuthorSignature } from "@/components/AuthorSignature";
+import { ShareButton } from "@/components/ShareButton";
+import { useArticleMeta } from "@/hooks/useArticleMeta";
 
 interface ArticleMeta {
   title: string;
@@ -72,6 +74,22 @@ export default function ArticleDetail() {
     return () => { cancelled = true; };
   }, [slug]);
 
+  const articleUrl = `/academy/articles/${slug}`;
+  const fullUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${articleUrl}`
+      : articleUrl;
+
+  useArticleMeta(
+    meta
+      ? {
+          title: meta.title,
+          description: meta.description,
+          url: fullUrl,
+        }
+      : null,
+  );
+
   if (loading) {
     return (
       <div className="w-full pt-32 pb-20">
@@ -95,8 +113,6 @@ export default function ArticleDetail() {
       </div>
     );
   }
-
-  const articleUrl = `/academy/articles/${slug}`;
 
   return (
     <div className="w-full pt-32 pb-20">
@@ -138,13 +154,26 @@ export default function ArticleDetail() {
             </motion.p>
           )}
 
-          {/* Interactions d'article (likes temps réel) */}
+          {/* Interactions d'article (likes temps réel + partage viral) */}
           <ArticleInteractions
             articleId={slug}
             articleTitle={meta.title}
             articleUrl={articleUrl}
             onCommentClick={() =>
               commentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+            shareSlot={
+              <ShareButton
+                article={{
+                  id: slug,
+                  title: meta.title,
+                  content,
+                  description: meta.description,
+                  category: meta.category,
+                  icon: meta.icon,
+                }}
+                url={fullUrl}
+              />
             }
           />
 
