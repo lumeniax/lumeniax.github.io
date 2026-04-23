@@ -179,7 +179,7 @@ export function ShareButton({ article, url, className }: ShareButtonProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.18 }}
-            className="absolute z-30 mt-2 left-0 w-72 rounded-2xl border border-border bg-popover text-popover-foreground shadow-xl p-3"
+            className="absolute z-30 mt-2 left-0 w-[22rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-popover text-popover-foreground shadow-xl p-3"
           >
             {summary && (
               <div className="px-2 pb-3 mb-2 border-b border-border/60">
@@ -190,9 +190,11 @@ export function ShareButton({ article, url, className }: ShareButtonProps) {
                     Score {summary.score}/10
                   </span>
                 </div>
-                <p className="mt-2 text-sm leading-relaxed line-clamp-3">
-                  {summary.text}
-                </p>
+                <div className="mt-2 max-h-72 overflow-y-auto pr-1">
+                  <p className="text-sm leading-relaxed whitespace-pre-line">
+                    {summary.text}
+                  </p>
+                </div>
               </div>
             )}
 

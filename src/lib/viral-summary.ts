@@ -26,6 +26,8 @@ export interface ViralSummary {
   score: number;
   emojis: string[];
   hook: string;
+  intro: string;
+  outline: string[];
   variants: Record<ShareNetwork, string>;
 }
 
@@ -94,31 +96,62 @@ const CATEGORY_EMOJI: Record<string, string> = {
 };
 
 const HOOK_TEMPLATES = [
-  "Tu ne devineras jamais ce que ça change…",
+  "STOP — lis ça avant de scroller.",
   "Personne ne t'a jamais expliqué ça aussi clairement.",
   "C'est exactement ce que les autres préfèrent que tu ignores.",
   "Lis ça avant qu'il ne soit trop tard.",
   "Ce que je viens de découvrir va te bouleverser.",
   "Si tu lis ça, ta vision changera pour toujours.",
-  "Voilà la vérité que personne n'ose dire.",
+  "Voilà la vérité que personne n'ose dire tout haut.",
   "Ce détail va te faire tout repenser.",
+  "Tu ne verras plus jamais les choses pareil.",
+  "À lire absolument — et à partager.",
+];
+
+const CTA_TEMPLATES = [
+  "👇 Découvre tout dans l'article :",
+  "👉 L'article complet est ici :",
+  "🔗 À lire en entier ici :",
+  "✨ Plonge dans la lecture :",
 ];
 
 // ── Utilitaires ───────────────────────────────────────────────────────────────
 
-function stripHtml(html: string): string {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
+function decodeEntities(s: string): string {
+  return s
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
+    .replace(/&gt;/g, ">");
+}
+
+function stripHtml(html: string): string {
+  return decodeEntities(
+    html
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+  )
     .replace(/\s+/g, " ")
     .trim();
+}
+
+// Extrait les titres de sections (H2/H3) pour bâtir le sommaire.
+function extractHeadings(html: string): string[] {
+  if (!html) return [];
+  const out: string[] = [];
+  const re = /<h([23])[^>]*>([\s\S]*?)<\/h\1>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const text = decodeEntities(m[2].replace(/<[^>]+>/g, " "))
+      .replace(/\s+/g, " ")
+      .trim();
+    if (text && text.length >= 3 && text.length <= 120) out.push(text);
+  }
+  // Déduplique en gardant l'ordre.
+  return Array.from(new Set(out));
 }
 
 function splitSentences(text: string): string[] {
@@ -144,10 +177,23 @@ function scoreSentence(s: string): { score: number; emojis: string[] } {
   return { score, emojis: Array.from(emojis) };
 }
 
-function pickHook(seed: string): string {
+function seedHash(seed: string): number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
-  return HOOK_TEMPLATES[Math.abs(h) % HOOK_TEMPLATES.length];
+  return Math.abs(h);
+}
+
+function pickHook(seed: string): string {
+  return HOOK_TEMPLATES[seedHash(seed) % HOOK_TEMPLATES.length];
+}
+
+function pickCTA(seed: string): string {
+  return CTA_TEMPLATES[seedHash(seed + "_cta") % CTA_TEMPLATES.length];
+}
+
+function bulletEmoji(index: number, themeEmojis: string[]): string {
+  const fallback = ["✨", "🔥", "💡", "🎯", "⚡"];
+  return themeEmojis[index] || fallback[index % fallback.length];
 }
 
 // ── Cœur du moteur ────────────────────────────────────────────────────────────
@@ -155,6 +201,7 @@ function pickHook(seed: string): string {
 function runHeuristicSummary(article: ArticleInput): ViralSummary {
   const raw = article.content ? stripHtml(article.content) : "";
   const corpus = raw || article.description || article.title;
+  const headings = article.content ? extractHeadings(article.content) : [];
 
   const sentences = splitSentences(corpus);
   const scored = sentences
@@ -162,36 +209,120 @@ function runHeuristicSummary(article: ArticleInput): ViralSummary {
     .sort((a, b) => b.score - a.score);
 
   const best = scored[0]?.s || article.description || article.title;
+
+  // Cherche une 2e phrase forte, distincte de la 1ère.
+  const second =
+    scored.find((x) => x.s !== best && x.score > 0)?.s ||
+    article.description ||
+    "";
+
   const aggregateEmojis = new Set<string>();
-  scored.slice(0, 3).forEach((x) => x.emojis.forEach((e) => aggregateEmojis.add(e)));
+  scored.slice(0, 5).forEach((x) => x.emojis.forEach((e) => aggregateEmojis.add(e)));
 
   if (article.category && CATEGORY_EMOJI[article.category]) {
     aggregateEmojis.add(CATEGORY_EMOJI[article.category]);
   }
   if (article.icon) aggregateEmojis.add(article.icon);
 
-  const emojis = Array.from(aggregateEmojis).slice(0, 3);
+  const emojis = Array.from(aggregateEmojis).slice(0, 4);
   const hook = pickHook(article.id || article.title);
-
-  // Construit un résumé viral : hook court + meilleure phrase tronquée.
-  const trimmed = best.length > 180 ? best.slice(0, 177).trimEnd() + "…" : best;
+  const cta = pickCTA(article.id || article.title);
   const baseEmoji = emojis[0] || "🔥";
-  const text = `${baseEmoji} ${hook} ${trimmed}`;
 
-  // Score de viralité 1–10.
-  const rawScore = (scored[0]?.score || 0) + emojis.length + (sentences.length > 5 ? 1 : 0);
+  // ── Introduction forte : hook + titre en gras + 1ère phrase choc + relance.
+  const trimmedBest = best.length > 220 ? best.slice(0, 217).trimEnd() + "…" : best;
+  const trimmedSecond =
+    second && second !== best
+      ? second.length > 200
+        ? second.slice(0, 197).trimEnd() + "…"
+        : second
+      : "";
+
+  const intro =
+    `${baseEmoji} ${hook}\n\n` +
+    `« ${article.title} »\n\n` +
+    `${trimmedBest}` +
+    (trimmedSecond ? `\n\n${trimmedSecond}` : "");
+
+  // ── Sommaire : 3 à 5 grandes lignes pour exciter la curiosité.
+  const themeEmojis = emojis.slice(1).concat(["✨", "🔥", "💡", "🎯", "⚡"]);
+  let outlineSource = headings.slice(0, 5);
+  if (outlineSource.length < 3) {
+    // Fallback : on construit des « teasers » à partir des meilleures phrases.
+    outlineSource = scored
+      .map((x) => x.s)
+      .filter((s) => s !== best)
+      .slice(0, 4)
+      .map((s) => (s.length > 90 ? s.slice(0, 87).trimEnd() + "…" : s));
+  }
+  const outline = outlineSource.map(
+    (h, i) => `${bulletEmoji(i, themeEmojis)} ${h}`
+  );
+
+  // ── Texte complet (résumé long, format universel).
+  const text =
+    intro +
+    (outline.length
+      ? `\n\n📌 Au programme :\n${outline.join("\n")}`
+      : "") +
+    `\n\n${cta}`;
+
+  // ── Score viral 1–10.
+  const rawScore =
+    (scored[0]?.score || 0) +
+    emojis.length +
+    (sentences.length > 5 ? 1 : 0) +
+    (outline.length >= 3 ? 1 : 0) +
+    (trimmedSecond ? 1 : 0);
   const score = Math.max(1, Math.min(10, 4 + Math.round(rawScore)));
+
+  // ── Variantes par réseau ───────────────────────────────────────────────────
+  const outlineBlock = outline.length
+    ? `\n\n📌 Au programme :\n${outline.join("\n")}`
+    : "";
+
+  const whatsappBody =
+    `${baseEmoji} *${hook}*\n\n` +
+    `*${article.title}*\n\n` +
+    `${trimmedBest}` +
+    (trimmedSecond ? `\n\n_${trimmedSecond}_` : "") +
+    outlineBlock +
+    `\n\n${cta}`;
+
+  const facebookBody =
+    `${emojis.join(" ") || baseEmoji}  ${hook}\n\n` +
+    `${article.title.toUpperCase()}\n\n` +
+    `${trimmedBest}` +
+    (trimmedSecond ? `\n\n${trimmedSecond}` : "") +
+    outlineBlock +
+    `\n\n${cta}`;
+
+  const telegramBody =
+    `${baseEmoji} ${hook}\n\n` +
+    `**${article.title}**\n\n` +
+    `${trimmedBest}` +
+    outlineBlock +
+    `\n\n${cta}`;
+
+  const messengerBody =
+    `${baseEmoji} ${hook}\n\n${trimmedBest}` +
+    (outline.length ? `\n\n• ${outline.slice(0, 3).join("\n• ")}` : "") +
+    `\n\n${cta}`;
+
+  const twitterBody = truncateTwitter(
+    `${baseEmoji} ${hook}\n\n${trimmedBest}`
+  );
 
   const variants: Record<ShareNetwork, string> = {
     default: text,
-    whatsapp: `${baseEmoji} *${article.title}*\n\n${trimmed}\n\n👉 À lire :`,
-    facebook: `${emojis.join(" ") || baseEmoji} ${hook}\n\n${trimmed}`,
-    messenger: `${baseEmoji} ${trimmed}`,
-    telegram: `${baseEmoji} ${article.title}\n\n${trimmed}`,
-    twitter: truncateTwitter(`${baseEmoji} ${trimmed}`),
+    whatsapp: whatsappBody,
+    facebook: facebookBody,
+    messenger: messengerBody,
+    telegram: telegramBody,
+    twitter: twitterBody,
   };
 
-  return { text, score, emojis, hook, variants };
+  return { text, score, emojis, hook, intro, outline, variants };
 }
 
 function truncateTwitter(text: string): string {
