@@ -130,7 +130,8 @@ const CATEGORY_LABELS: Record<string, string> = {
 const EMOJIS = ["💬", "📚", "🤝", "🧠", "⚡", "🎯", "🌍", "🚀", "💡", "🎓"];
 
 type FilterCat = "all" | "echange" | "club" | "reseau";
-type Sort = "recent" | "popular" | "mine";
+type Sort = "recent" | "popular" | "mine" | "active" | "trending";
+type SortDirection = "asc" | "desc";
 
 export default function AcademyCommunaute() {
   const [spaces, setSpaces] = useState<ForumSpace[]>([]);
@@ -140,8 +141,10 @@ export default function AcademyCommunaute() {
   const [user, setUser] = useState<ForumUser | null>(getForumUser());
   const [filter, setFilter] = useState<FilterCat>("all");
   const [sort, setSort] = useState<Sort>("recent");
+  const [sortDir, setSortDir] = useState<SortDirection>("desc");
   const [search, setSearch] = useState("");
   const [favorites, setFavorites] = useState<string[]>(getFavoriteSpaces());
+  const [minMembers, setMinMembers] = useState(0);
 
   const [showUserDialog, setShowUserDialog] = useState(false);
   const [editProfileMode, setEditProfileMode] = useState(false);
@@ -414,18 +417,44 @@ export default function AcademyCommunaute() {
         s.name.toLowerCase().includes(query) ||
         s.description.toLowerCase().includes(query)
     )
+    .filter((s) => s.member_count >= minMembers)
     .filter((s) => {
       if (sort !== "mine") return true;
       if (!user) return false;
       return s.members.includes(user.id) || s.author_id === user.id;
     })
     .sort((a, b) => {
-      if (sort === "popular") {
-        const aScore = (a.member_count || 0) * 2 + (a.post_count || 0);
-        const bScore = (b.member_count || 0) * 2 + (b.post_count || 0);
-        return bScore - aScore;
+      let comparison = 0;
+      
+      switch (sort) {
+        case "popular":
+          // Popularité = membres × 2 + posts
+          const aScore = (a.member_count || 0) * 2 + (a.post_count || 0);
+          const bScore = (b.member_count || 0) * 2 + (b.post_count || 0);
+          comparison = bScore - aScore;
+          break;
+        case "active":
+          // Activité = posts + membres (plus de posts = plus actif)
+          const aActivity = (a.post_count || 0) * 3 + (a.member_count || 0);
+          const bActivity = (b.post_count || 0) * 3 + (b.member_count || 0);
+          comparison = bActivity - aActivity;
+          break;
+        case "trending":
+          // Tendance = espaces créés récemment avec activité
+          const aRecency = new Date(a.created_at).getTime();
+          const bRecency = new Date(b.created_at).getTime();
+          const aRecencyScore = (bRecency - aRecency) / (1000 * 60 * 60 * 24); // jours
+          const bRecencyScore = (aRecency - bRecency) / (1000 * 60 * 60 * 24);
+          const aTrending = (a.post_count || 0) * 2 - Math.max(0, aRecencyScore);
+          const bTrending = (b.post_count || 0) * 2 - Math.max(0, bRecencyScore);
+          comparison = bTrending - aTrending;
+          break;
+        case "recent":
+        default:
+          comparison = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      
+      return sortDir === "desc" ? comparison : -comparison;
     });
 
   return (
@@ -624,31 +653,53 @@ export default function AcademyCommunaute() {
         </div>
 
         {/* Sort tabs */}
-        <div className="flex items-center gap-2 mb-6 text-xs">
-          {(
-            [
-              { id: "recent", label: "Récents", icon: <Sparkles size={12} /> },
-              {
-                id: "popular",
-                label: "Populaires",
-                icon: <TrendingUp size={12} />,
-              },
-              { id: "mine", label: "Mes espaces", icon: <Star size={12} /> },
-            ] as const
-          ).map((opt) => (
-            <button
-              key={opt.id}
-              onClick={() => setSort(opt.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all ${
-                sort === opt.id
-                  ? "border-primary/40 bg-primary/10 text-primary font-semibold"
-                  : "border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
-            >
-              {opt.icon}
-              {opt.label}
-            </button>
-          ))}
+        <div className="flex flex-col gap-3 mb-6">
+          <div className="flex items-center gap-2 text-xs flex-wrap">
+            {
+              (
+                [
+                  { id: "recent", label: "Récents", icon: <Sparkles size={12} /> },
+                  { id: "popular", label: "Populaires", icon: <TrendingUp size={12} /> },
+                  { id: "active", label: "Actifs", icon: <MessageSquare size={12} /> },
+                  { id: "trending", label: "Tendance", icon: <TrendingUp size={12} /> },
+                  { id: "mine", label: "Mes espaces", icon: <Star size={12} /> },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => setSort(opt.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all ${
+                    sort === opt.id
+                      ? "border-primary/40 bg-primary/10 text-primary font-semibold"
+                      : "border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
+                  }`}
+                >
+                  {opt.icon}
+                  {opt.label}
+                </button>
+              ))
+            }
+          </div>
+          
+          {/* Filtre par nombre minimum de membres */}
+          <div className="flex items-center gap-3 text-xs">
+            <label className="text-muted-foreground font-medium">Min. membres:</label>
+            <div className="flex items-center gap-2">
+              {[0, 5, 10, 20].map((num) => (
+                <button
+                  key={num}
+                  onClick={() => setMinMembers(num)}
+                  className={`px-2 py-1 rounded border transition-all ${
+                    minMembers === num
+                      ? "border-primary/40 bg-primary/10 text-primary font-semibold"
+                      : "border-border/50 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {num === 0 ? "Tous" : num}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Search result count */}
@@ -656,7 +707,7 @@ export default function AcademyCommunaute() {
           <p className="text-sm text-muted-foreground mb-6 ml-1">
             {filtered.length === 0
               ? `Aucun résultat pour « ${search} »`
-              : `${filtered.length} espace${filtered.length !== 1 ? "s" : ""} trouvé${filtered.length !== 1 ? "s" : ""} pour « ${search} »`}
+              : `${filtered.length} espace${filtered.length !== 1 ? "s" : ""} trouvé${filtered.length !== 1 ? "s" : ""}`}
           </p>
         )}
 
