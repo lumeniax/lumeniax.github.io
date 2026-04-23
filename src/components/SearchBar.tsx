@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Search, X, FileText, Layout, Zap, ArrowRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { getSearchIndex, SearchResult } from "@/lib/search-index";
+import { getSearchIndex, SearchResult, GLOBAL_PAGES } from "@/lib/search-index";
 
 export function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -44,6 +44,17 @@ export function SearchBar() {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
+  }, [isOpen]);
+
+  // Gestion du clavier (ESC pour fermer)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
   const getTypeIcon = (type: string) => {
