@@ -115,6 +115,37 @@ const CTA_TEMPLATES = [
   "✨ Plonge dans la lecture :",
 ];
 
+// ── Mentions & hashtags ──────────────────────────────────────────────────────
+// Compte officiel mis en avant dans les partages.
+const SITE_HANDLE = "@Lumeniax";
+const ALWAYS_HASHTAGS = ["#Lumeniax", "#LumeniaxAcademy"];
+
+// Hashtags additionnels suggérés selon la catégorie de l'article.
+const CATEGORY_HASHTAGS: Record<string, string[]> = {
+  "Spiritualité & Foi":      ["#Spiritualité", "#Foi", "#Éveil"],
+  "Philosophie":             ["#Philosophie", "#Sagesse"],
+  "Développement personnel": ["#DéveloppementPersonnel", "#Mindset"],
+  "Psychologie":             ["#Psychologie", "#Mental"],
+  "Réflexion":               ["#Réflexion", "#Mindset"],
+  "Sciences":                ["#Science", "#Connaissance"],
+  "Technologie":             ["#Tech", "#Innovation"],
+  "Productivité":            ["#Productivité", "#Focus"],
+  "Société":                 ["#Société", "#Culture"],
+};
+
+function buildHashtags(article: ArticleInput): string {
+  const set = new Set<string>(ALWAYS_HASHTAGS);
+  if (article.category && CATEGORY_HASHTAGS[article.category]) {
+    CATEGORY_HASHTAGS[article.category].forEach((t) => set.add(t));
+  }
+  return Array.from(set).slice(0, 5).join(" ");
+}
+
+// Pour Twitter / X : version sans accents pour éviter de couper les hashtags.
+function buildHashtagsTwitter(article: ArticleInput): string {
+  return buildHashtags(article).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 // ── Utilitaires ───────────────────────────────────────────────────────────────
 
 function decodeEntities(s: string): string {
@@ -281,36 +312,46 @@ function runHeuristicSummary(article: ArticleInput): ViralSummary {
     ? `\n\n📌 Au programme :\n${outline.join("\n")}`
     : "";
 
+  const hashtags        = buildHashtags(article);
+  const hashtagsTwitter = buildHashtagsTwitter(article);
+  const tagsLine        = `\n\n${SITE_HANDLE} • ${hashtags}`;
+
   const whatsappBody =
     `${baseEmoji} *${hook}*\n\n` +
     `*${article.title}*\n\n` +
     `${trimmedBest}` +
     (trimmedSecond ? `\n\n_${trimmedSecond}_` : "") +
     outlineBlock +
-    `\n\n${cta}`;
+    `\n\n${cta}` +
+    tagsLine;
 
+  // Facebook : même richesse que WhatsApp + mentions et hashtags.
   const facebookBody =
     `${emojis.join(" ") || baseEmoji}  ${hook}\n\n` +
     `${article.title.toUpperCase()}\n\n` +
     `${trimmedBest}` +
     (trimmedSecond ? `\n\n${trimmedSecond}` : "") +
     outlineBlock +
-    `\n\n${cta}`;
+    `\n\n${cta}` +
+    tagsLine;
 
   const telegramBody =
     `${baseEmoji} ${hook}\n\n` +
     `**${article.title}**\n\n` +
     `${trimmedBest}` +
     outlineBlock +
-    `\n\n${cta}`;
+    `\n\n${cta}` +
+    tagsLine;
 
   const messengerBody =
     `${baseEmoji} ${hook}\n\n${trimmedBest}` +
     (outline.length ? `\n\n• ${outline.slice(0, 3).join("\n• ")}` : "") +
-    `\n\n${cta}`;
+    `\n\n${cta}` +
+    tagsLine;
 
+  // Twitter / X : on garde l'accroche + handle + hashtags compacts.
   const twitterBody = truncateTwitter(
-    `${baseEmoji} ${hook}\n\n${trimmedBest}`
+    `${baseEmoji} ${hook}\n\n${trimmedBest}\n\n${SITE_HANDLE} ${hashtagsTwitter}`
   );
 
   const variants: Record<ShareNetwork, string> = {

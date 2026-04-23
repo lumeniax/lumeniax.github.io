@@ -9,7 +9,7 @@
     "dev": "vite",
     "prebuild": "node scripts/generate-manifest.js",
     "build": "vite build",
-    "postbuild": "cp dist/index.html dist/404.html",
+    "postbuild": "cp dist/index.html dist/404.html && node scripts/prerender-articles.js",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
