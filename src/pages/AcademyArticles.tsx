@@ -3,9 +3,8 @@ import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "@/lib/animations";
 import { Link } from "wouter";
 import { normalizeDate, compareDatesDesc } from "@/lib/date-utils";
-import { Search, X } from "lucide-react";
+import { Search, X, ArrowUpDown, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Article {
   title: string;
@@ -158,52 +157,101 @@ export default function AcademyArticles() {
               </div>
 
               {/* Filtres par catégorie et tri */}
-              <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-                {/* Catégories */}
-                <div className="flex-1">
-                  <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+              <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 lg:items-end">
+                {/* Catégories — pills horizontalement défilables */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-muted-foreground mb-2 uppercase tracking-[0.12em]">
                     Catégorie
                   </p>
-                  <Tabs
-                    value={selectedCategory}
-                    onValueChange={setSelectedCategory}
-                    className="w-full"
-                  >
-                    <TabsList className="bg-background/60 border border-border/50 w-full justify-start overflow-x-auto">
-                      <TabsTrigger value="all" className="text-xs">
+                  <div className="relative">
+                    <div
+                      className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 scroll-smooth snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                      role="tablist"
+                      aria-label="Filtrer par catégorie"
+                    >
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={selectedCategory === "all"}
+                        onClick={() => setSelectedCategory("all")}
+                        className={`shrink-0 snap-start whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all ${
+                          selectedCategory === "all"
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
+                            : "bg-background/60 text-muted-foreground border-border/50 hover:text-foreground hover:border-primary/40"
+                        }`}
+                      >
                         Tous
-                      </TabsTrigger>
-                      {categories.map((cat) => (
-                        <TabsTrigger key={cat} value={cat} className="text-xs">
-                          {cat}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                  </Tabs>
+                        <span
+                          className={`ml-1.5 text-[10px] tabular-nums ${
+                            selectedCategory === "all"
+                              ? "opacity-80"
+                              : "opacity-60"
+                          }`}
+                        >
+                          {articles.length}
+                        </span>
+                      </button>
+                      {categories.map((cat) => {
+                        const count = articles.filter(
+                          (a) => a.category === cat
+                        ).length;
+                        const active = selectedCategory === cat;
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            role="tab"
+                            aria-selected={active}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`shrink-0 snap-start whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all ${
+                              active
+                                ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
+                                : "bg-background/60 text-muted-foreground border-border/50 hover:text-foreground hover:border-primary/40"
+                            }`}
+                          >
+                            {cat}
+                            <span
+                              className={`ml-1.5 text-[10px] tabular-nums ${
+                                active ? "opacity-80" : "opacity-60"
+                              }`}
+                            >
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {/* Edge fade masks pour indiquer le défilement */}
+                    <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-background to-transparent" />
+                    <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-background to-transparent" />
+                  </div>
                 </div>
 
-                {/* Tri */}
-                <div className="flex-1">
-                  <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-                    Tri
+                {/* Tri — dropdown natif stylé */}
+                <div className="lg:w-56 shrink-0">
+                  <p className="text-[11px] font-semibold text-muted-foreground mb-2 uppercase tracking-[0.12em]">
+                    Trier par
                   </p>
-                  <Tabs
-                    value={sortBy}
-                    onValueChange={(v) => setSortBy(v as SortOption)}
-                    className="w-full"
-                  >
-                    <TabsList className="bg-background/60 border border-border/50 w-full">
-                      <TabsTrigger value="recent" className="text-xs">
-                        Plus récents
-                      </TabsTrigger>
-                      <TabsTrigger value="oldest" className="text-xs">
-                        Plus anciens
-                      </TabsTrigger>
-                      <TabsTrigger value="title" className="text-xs">
-                        Titre (A-Z)
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                  <div className="relative">
+                    <ArrowUpDown
+                      size={13}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                    />
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as SortOption)}
+                      className="w-full h-9 pl-9 pr-9 text-xs rounded-md bg-background/60 border border-border/50 hover:border-primary/40 focus:border-primary/50 focus:outline-none transition-colors appearance-none cursor-pointer text-foreground"
+                      aria-label="Trier par"
+                    >
+                      <option value="recent">Plus récents</option>
+                      <option value="oldest">Plus anciens</option>
+                      <option value="title">Titre (A-Z)</option>
+                    </select>
+                    <ChevronDown
+                      size={14}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                    />
+                  </div>
                 </div>
               </div>
 
