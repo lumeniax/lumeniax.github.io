@@ -2,6 +2,8 @@ import { ReactNode, useEffect } from "react";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { BackButton } from "./BackButton";
+import { ThemeToggle } from "./ThemeToggle";
+import { ThemeProvider } from "@/lib/theme";
 import { useLocation } from "wouter";
 
 interface LayoutProps {
@@ -16,13 +18,14 @@ export function Layout({ children }: LayoutProps) {
   }, [location]);
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-background text-foreground dark">
-      <Navbar />
-      <BackButton />
-      <main className="flex-1">
-        {children}
-      </main>
-      <Footer />
-    </div>
+    <ThemeProvider>
+      <div className="min-h-[100dvh] flex flex-col bg-background text-foreground transition-colors duration-300">
+        <Navbar />
+        <BackButton />
+        <main className="flex-1">{children}</main>
+        <Footer />
+        <ThemeToggle />
+      </div>
+    </ThemeProvider>
   );
 }
