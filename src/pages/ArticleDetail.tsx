@@ -86,6 +86,9 @@ export default function ArticleDetail() {
           title: meta.title,
           description: meta.description,
           url: fullUrl,
+          datePublished: meta.date,
+          category: meta.category,
+          authorName: "Messan Salem ADIGUIDI"
         }
       : null,
   );
