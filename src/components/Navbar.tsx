@@ -33,11 +33,16 @@ export function Navbar() {
       <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
         <Link href="/">
           <div className="cursor-pointer hover:opacity-90 transition-opacity duration-300">
-            <img 
-              src="/images/logo.png" 
-              alt="Lumeniax Logo" 
-              className="h-12 w-auto"
-            />
+            <picture>
+              <source srcSet="/images/logo.webp" type="image/webp" />
+              <img 
+                src="/images/logo.png" 
+                alt="Lumeniax Logo" 
+                className="h-12 w-auto"
+                width="150"
+                height="48"
+              />
+            </picture>
           </div>
         </Link>
 

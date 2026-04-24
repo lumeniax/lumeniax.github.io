@@ -15,11 +15,17 @@ export function Footer() {
           <div className="md:col-span-1">
             <Link href="/">
               <div className="cursor-pointer hover:opacity-90 transition-opacity duration-300 mb-4">
-                <img 
-                  src="/images/logo.png" 
-                  alt="Lumeniax Logo" 
-                  className="h-16 w-auto"
-                />
+                <picture>
+                  <source srcSet="/images/logo.webp" type="image/webp" />
+                  <img 
+                    src="/images/logo.png" 
+                    alt="Lumeniax Logo" 
+                    className="h-16 w-auto"
+                    width="200"
+                    height="64"
+                    loading="lazy"
+                  />
+                </picture>
               </div>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">

@@ -19,11 +19,16 @@ export default function Home() {
           <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-gradient-to-br from-accent/15 to-transparent rounded-full blur-3xl opacity-30" />
           
           {/* Background image */}
-          <img 
-            src="/images/hero-bg.jpg" 
-            alt="Lumeniax Abstract Background" 
-            className="w-full h-full object-cover opacity-10"
-          />
+          <picture>
+            <source srcSet="/images/hero-bg.webp" type="image/webp" />
+            <img 
+              src="/images/hero-bg.jpg" 
+              alt="Lumeniax Abstract Background" 
+              className="w-full h-full object-cover opacity-10"
+              loading="eager"
+              fetchPriority="high"
+            />
+          </picture>
         </div>
         
         <div className="container relative z-10 mx-auto px-6 md:px-12 flex flex-col items-center text-center">

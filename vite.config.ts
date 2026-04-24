@@ -16,11 +16,15 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          motion: ["framer-motion"],
-          ui: ["@radix-ui/react-dialog", "@radix-ui/react-tooltip", "@radix-ui/react-toast"],
-          router: ["wouter"],
-          query: ["@tanstack/react-query"],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('framer-motion')) return 'motion';
+            if (id.includes('@radix-ui')) return 'ui-radix';
+            if (id.includes('lucide-react')) return 'ui-icons';
+            if (id.includes('recharts')) return 'charts';
+            if (id.includes('firebase')) return 'firebase';
+            return 'vendor';
+          }
         },
       },
     },
