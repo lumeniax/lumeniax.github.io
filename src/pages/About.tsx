@@ -15,7 +15,7 @@ export default function About() {
             À propos de <span className="italic text-primary">Lumeniax</span>
           </motion.h1>
           <motion.p variants={fadeUp} className="text-lg text-muted-foreground">
-            L'excellence francophone, née d'une fusion stratégique.
+            LUMENIAX, l'excellence, née d'une fusion stratégique.
           </motion.p>
         </motion.div>
 

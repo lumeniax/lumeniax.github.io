@@ -67,8 +67,8 @@ export default function PolitiqueConfidentialite() {
             </p>
             <p className="mt-2">
               Pour exercer ces droits, contactez-nous à :{" "}
-              <a href="mailto:contact@lumeniax.com" className="text-primary hover:underline">
-                contact@lumeniax.com
+              <a href="mailto:lumeniax7@gmail.com" className="text-primary hover:underline">
+                lumeniax7@gmail.com
               </a>
             </p>
           </section>

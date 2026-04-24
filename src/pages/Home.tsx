@@ -41,12 +41,12 @@ export default function Home() {
             {/* Badge premium */}
             <motion.div variants={fadeUp} className="mb-6 inline-flex items-center space-x-2 px-4 py-2 rounded-full border border-primary/40 bg-gradient-to-r from-primary/10 via-accent/5 to-secondary/10 backdrop-blur-md hover:border-primary/70 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20">
               <Zap size={14} className="text-primary" />
-              <span className="text-xs font-medium tracking-widest text-primary uppercase">Écosystème Digital Premium</span>
+              <span className="text-xs font-medium tracking-widest text-primary uppercase">Écosystème digital premium</span>
             </motion.div>
             
             {/* Hero title avec gradient */}
             <motion.h1 variants={fadeUp} className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold leading-[1.1] mb-8 text-foreground">
-              L'excellence francophone <br className="hidden md:block" />
+              LUMENIAX, l'excellence <br className="hidden md:block" />
               <span className="hero-gradient-text italic font-black">sans compromis.</span>
             </motion.h1>
             

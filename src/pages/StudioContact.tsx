@@ -22,7 +22,7 @@ export default function StudioContact() {
     e.preventDefault();
     const { nom, email, projet } = fields;
     const body = `Nom: ${nom}%0AEmail: ${email}%0A%0AProjet:%0A${encodeURIComponent(projet)}`;
-    window.location.href = `mailto:studio@lumeniax.com?subject=${encodeURIComponent("Nouveau projet Studio")}&body=${body}`;
+    window.location.href = `mailto:lumeniax7@gmail.com?subject=${encodeURIComponent("Nouveau projet Studio")}&body=${body}`;
     setSubmitted(true);
   };
 
@@ -56,10 +56,10 @@ export default function StudioContact() {
                 <div>
                   <h4 className="font-medium mb-1">Email</h4>
                   <a
-                    href="mailto:studio@lumeniax.com"
+                    href="mailto:lumeniax7@gmail.com"
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
-                    studio@lumeniax.com
+                    lumeniax7@gmail.com
                   </a>
                 </div>
               </div>

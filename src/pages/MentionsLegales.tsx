@@ -27,8 +27,8 @@ export default function MentionsLegales() {
             </p>
             <p className="mt-2">
               Email de contact :{" "}
-              <a href="mailto:contact@lumeniax.com" className="text-primary hover:underline">
-                contact@lumeniax.com
+              <a href="mailto:lumeniax7@gmail.com" className="text-primary hover:underline">
+                lumeniax7@gmail.com
               </a>
             </p>
             <p className="mt-2">
@@ -61,8 +61,8 @@ export default function MentionsLegales() {
             <h2 className="text-xl font-serif text-foreground mb-3">Contact</h2>
             <p>
               Pour toute question relative aux mentions légales, contactez-nous à{" "}
-              <a href="mailto:contact@lumeniax.com" className="text-primary hover:underline">
-                contact@lumeniax.com
+              <a href="mailto:lumeniax7@gmail.com" className="text-primary hover:underline">
+                lumeniax7@gmail.com
               </a>.
             </p>
           </section>

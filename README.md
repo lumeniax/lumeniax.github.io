@@ -27,4 +27,4 @@ React 19 · TypeScript · Vite 7 · Tailwind CSS v4 · Framer Motion · Wouter �
 
 ---
 
-*Lumeniax © 2025 — Écosystème Digital Premium Francophone*
+*Lumeniax © 2025 — Écosystème digital premium*

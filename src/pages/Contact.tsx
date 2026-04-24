@@ -24,7 +24,7 @@ export default function Contact() {
     e.preventDefault();
     const { nom, prenom, email, message, sujet } = fields;
     const body = `Sujet: ${sujet}%0ANom: ${nom} ${prenom}%0AEmail: ${email}%0A%0AMessage:%0A${encodeURIComponent(message)}`;
-    window.location.href = `mailto:contact@lumeniax.com?subject=${encodeURIComponent(sujet)}&body=${body}`;
+    window.location.href = `mailto:lumeniax7@gmail.com?subject=${encodeURIComponent(sujet)}&body=${body}`;
     setSubmitted(true);
   };
 
@@ -61,10 +61,10 @@ export default function Contact() {
                 <div>
                   <h4 className="font-medium mb-1">Email Global</h4>
                   <a
-                    href="mailto:contact@lumeniax.com"
+                    href="mailto:lumeniax7@gmail.com"
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
-                    contact@lumeniax.com
+                    lumeniax7@gmail.com
                   </a>
                 </div>
               </div>

@@ -29,7 +29,7 @@ export function Footer() {
               </div>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-              Écosystème digital premium francophone.
+              Écosystème digital premium.
               <br />
               Intelligence sobre, élégance mémorable.
             </p>
@@ -92,10 +92,10 @@ export function Footer() {
               <li className="flex items-start text-sm text-muted-foreground hover:text-primary transition-colors duration-300 group">
                 <Mail size={16} className="mr-3 mt-1 text-primary shrink-0 group-hover:drop-shadow-lg transition-all" />
                 <a
-                  href="mailto:contact@lumeniax.com"
+                  href="mailto:lumeniax7@gmail.com"
                   className="hover:text-primary transition-colors duration-300"
                 >
-                  contact@lumeniax.com
+                  lumeniax7@gmail.com
                 </a>
               </li>
               <li className="flex items-start text-sm text-muted-foreground group">
