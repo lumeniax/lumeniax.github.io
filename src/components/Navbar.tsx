@@ -32,17 +32,26 @@ export function Navbar() {
     >
       <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
         <Link href="/">
-          <div className="cursor-pointer hover:opacity-90 transition-opacity duration-300">
-            <picture>
-              <source srcSet="/images/logo.webp" type="image/webp" />
-              <img 
-                src="/images/logo.png" 
-                alt="Lumeniax Logo" 
-                className="h-12 w-auto"
-                width="150"
-                height="48"
-              />
-            </picture>
+          <div className="cursor-pointer group flex items-center gap-3 transition-all duration-500">
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+              <picture className="relative">
+                <source srcSet="/images/logo.webp" type="image/webp" />
+                <img 
+                  src="/images/logo.png" 
+                  alt="Lumeniax Logo" 
+                  className="h-10 w-10 md:h-12 md:w-12 rounded-xl object-cover shadow-2xl transition-transform duration-500 group-hover:scale-110"
+                />
+              </picture>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xl md:text-2xl font-serif font-bold tracking-tighter bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                LUMENIAX
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.3em] text-accent font-medium -mt-1 opacity-80">
+                Digital Elite
+              </span>
+            </div>
           </div>
         </Link>
 

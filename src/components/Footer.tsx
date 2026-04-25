@@ -14,18 +14,27 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="md:col-span-1">
             <Link href="/">
-              <div className="cursor-pointer hover:opacity-90 transition-opacity duration-300 mb-4">
-                <picture>
-                  <source srcSet="/images/logo.webp" type="image/webp" />
-                  <img 
-                    src="/images/logo.png" 
-                    alt="Lumeniax Logo" 
-                    className="h-16 w-auto"
-                    width="200"
-                    height="64"
-                    loading="lazy"
-                  />
-                </picture>
+              <div className="cursor-pointer group flex items-center gap-3 transition-all duration-500 mb-6">
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+                  <picture className="relative">
+                    <source srcSet="/images/logo.webp" type="image/webp" />
+                    <img 
+                      src="/images/logo.png" 
+                      alt="Lumeniax Logo" 
+                      className="h-12 w-12 rounded-xl object-cover shadow-2xl transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  </picture>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xl font-serif font-bold tracking-tighter text-foreground">
+                    LUMENIAX
+                  </span>
+                  <span className="text-[9px] uppercase tracking-[0.3em] text-accent font-medium -mt-1 opacity-80">
+                    Digital Elite
+                  </span>
+                </div>
               </div>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
