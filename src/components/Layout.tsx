@@ -3,6 +3,7 @@ import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { BackButton } from "./BackButton";
 import { ThemeToggle } from "./ThemeToggle";
+import { PWAInstallBanner } from "./PWAInstallBanner";
 import { ThemeProvider } from "@/lib/theme";
 import { useLocation } from "wouter";
 
@@ -25,6 +26,7 @@ export function Layout({ children }: LayoutProps) {
         <main className="flex-1">{children}</main>
         <Footer />
         <ThemeToggle />
+        <PWAInstallBanner />
       </div>
     </ThemeProvider>
   );
