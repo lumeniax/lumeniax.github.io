@@ -5,18 +5,36 @@ import { X, Download, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const PWAInstallBanner: React.FC = () => {
-  const { isInstallable, isSubscribed, installApp, subscribeToPush } = usePWA();
+  const { isInstallable, isSubscribed, isInstalled, installApp, subscribeToPush } = usePWA();
   const [isVisible, setIsVisible] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    // Show banner after a short delay if installable or not subscribed
-    if (isInstallable || !isSubscribed) {
-      const timer = setTimeout(() => setIsVisible(true), 3000);
-      return () => clearTimeout(timer);
+    // Check if user has dismissed the banner in this session
+    const dismissed = sessionStorage.getItem('pwa-banner-dismissed') === 'true';
+    if (dismissed) {
+      setIsDismissed(true);
+      return;
     }
-  }, [isInstallable, isSubscribed]);
 
-  if (!isVisible) return null;
+    // Show banner after a short delay if:
+    // 1. Not already installed
+    // 2. AND (is installable OR not subscribed to notifications)
+    if (!isInstalled && (isInstallable || !isSubscribed)) {
+      const timer = setTimeout(() => setIsVisible(true), 5000);
+      return () => clearTimeout(timer);
+    } else {
+      setIsVisible(false);
+    }
+  }, [isInstallable, isSubscribed, isInstalled]);
+
+  const handleDismiss = () => {
+    setIsVisible(false);
+    setIsDismissed(true);
+    sessionStorage.setItem('pwa-banner-dismissed', 'true');
+  };
+
+  if (!isVisible || isDismissed || isInstalled) return null;
 
   return (
     <AnimatePresence>
@@ -39,7 +57,7 @@ export const PWAInstallBanner: React.FC = () => {
                 </div>
               </div>
               <button 
-                onClick={() => setIsVisible(false)}
+                onClick={handleDismiss}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X size={18} />

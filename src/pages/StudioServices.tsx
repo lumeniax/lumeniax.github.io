@@ -219,7 +219,7 @@ const pricingPlans = [
 
 export default function StudioServices() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <section className="bg-gradient-to-br from-blue-900 to-black text-white pt-32 pb-20 md:pt-40 md:pb-28">
         <div className="container mx-auto px-6 md:px-12">
           <div className="max-w-3xl">
@@ -282,8 +282,7 @@ export default function StudioServices() {
                 <p className="mb-4 text-sm font-semibold text-yellow-600">
                   {category.tagline}
                 </p>
-
-                <p className="mb-5 text-sm leading-relaxed text-gray-600">
+                <p className="mb-6 text-gray-600 leading-relaxed">
                   {category.description}
                 </p>
 
@@ -413,7 +412,7 @@ export default function StudioServices() {
                 key={plan.name}
                 className={`relative rounded-2xl p-8 transition-all duration-300 ${
                   plan.highlighted
-                    ? "scale-105 border-2 border-yellow-500 bg-gradient-to-br from-blue-900 to-blue-800 text-white shadow-2xl"
+                    ? "scale-100 md:scale-105 border-2 border-yellow-500 bg-gradient-to-br from-blue-900 to-blue-800 text-white shadow-2xl"
                     : "border-2 border-gray-200 bg-white text-gray-900 hover:border-yellow-500 hover:shadow-lg"
                 }`}
               >

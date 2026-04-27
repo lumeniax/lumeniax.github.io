@@ -4,14 +4,27 @@ export const usePWA = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    // Check if already installed
+    const checkInstalled = () => {
+      // Check display-mode
+      if (window.matchMedia('(display-mode: standalone)').matches || 
+          (window.navigator as any).standalone === true) {
+        setIsInstalled(true);
+        return true;
+      }
+      return false;
+    };
+
+    checkInstalled();
+
     // Register Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js')
           .then((registration) => {
-            console.log('SW registered:', registration);
             checkSubscription(registration);
           })
           .catch((error) => {
@@ -23,14 +36,32 @@ export const usePWA = () => {
     // Handle Install Prompt
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
-      setDeferredPrompt(e);
-      setIsInstallable(true);
+      // Only set as installable if not already detected as installed
+      if (!checkInstalled()) {
+        setDeferredPrompt(e);
+        setIsInstallable(true);
+      }
+    };
+
+    // Detect when app is installed
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+      localStorage.setItem('pwa-installed', 'true');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Check localStorage as fallback
+    if (localStorage.getItem('pwa-installed') === 'true') {
+      setIsInstalled(true);
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -47,13 +78,13 @@ export const usePWA = () => {
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       setIsInstallable(false);
+      setIsInstalled(true);
     }
     setDeferredPrompt(null);
   };
 
   const subscribeToPush = async () => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      console.warn('Push notifications not supported');
       return;
     }
 
@@ -62,21 +93,6 @@ export const usePWA = () => {
       const permission = await Notification.requestPermission();
       
       if (permission === 'granted') {
-        // In a real scenario, you'd get the public VAPID key from your backend
-        // For now, we just show the permission was granted
-        console.log('Notification permission granted');
-        
-        // Example subscription logic (requires VAPID key)
-        /*
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: 'YOUR_PUBLIC_VAPID_KEY'
-        });
-        console.log('Push subscription:', subscription);
-        setIsSubscribed(true);
-        */
-        
-        // Local test notification
         registration.showNotification('Lumeniax', {
           body: 'Les notifications sont activées !',
           icon: '/icon-192x192.png'
@@ -88,5 +104,5 @@ export const usePWA = () => {
     }
   };
 
-  return { isInstallable, isSubscribed, installApp, subscribeToPush };
+  return { isInstallable, isSubscribed, isInstalled, installApp, subscribeToPush };
 };
