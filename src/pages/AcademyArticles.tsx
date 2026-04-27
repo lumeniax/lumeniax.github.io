@@ -1,9 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { fadeUp, staggerContainer } from "@/lib/animations";
 import { Link } from "wouter";
 import { normalizeDate, compareDatesDesc } from "@/lib/date-utils";
-import { Search, X, ArrowUpDown, ChevronDown } from "lucide-react";
+import { Search, X, ArrowUpDown, ChevronDown, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface Article {
@@ -19,16 +19,22 @@ interface Article {
 
 type SortOption = "recent" | "oldest" | "title";
 
+const STORAGE_KEY_SORT = "lumeniax_academy_sort";
+
 export default function AcademyArticles() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<SortOption>("recent");
+  
+  // Initialisation du tri depuis le localStorage ou valeur par défaut
+  const [sortBy, setSortBy] = useState<SortOption>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_SORT);
+    return (saved as SortOption) || "recent";
+  });
 
   useEffect(() => {
-    // Ajout d'un timestamp pour éviter le cache navigateur et garantir l'instantanéité
     const timestamp = new Date().getTime();
     fetch(`/articles/articles.json?t=${timestamp}`)
       .then((res) => {
@@ -46,22 +52,23 @@ export default function AcademyArticles() {
       });
   }, []);
 
-  // Extraire les catégories uniques
+  // Sauvegarder le choix de tri quand il change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_SORT, sortBy);
+  }, [sortBy]);
+
   const categories = useMemo(() => {
     const cats = new Set(articles.map((a) => a.category));
     return Array.from(cats).sort();
   }, [articles]);
 
-  // Filtrer et trier les articles
   const filteredArticles = useMemo(() => {
     let result = articles;
 
-    // Filtre par catégorie
     if (selectedCategory !== "all") {
       result = result.filter((a) => a.category === selectedCategory);
     }
 
-    // Filtre par recherche (titre, description, catégorie)
     if (search.trim()) {
       const query = search.toLowerCase();
       result = result.filter(
@@ -72,7 +79,6 @@ export default function AcademyArticles() {
       );
     }
 
-    // Tri
     const sorted = [...result];
     switch (sortBy) {
       case "recent":
@@ -98,217 +104,191 @@ export default function AcademyArticles() {
   }, [articles, selectedCategory, search, sortBy]);
 
   return (
-    <div className="w-full pt-32 pb-20">
+    <div className="w-full pt-32 pb-20 bg-background">
       <div className="container mx-auto px-6 md:px-12">
         <motion.div
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
-          className="mb-20"
+          className="mb-16"
         >
-          <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl font-serif font-medium mb-6">
+          <motion.div variants={fadeUp} className="flex items-center gap-2 mb-4">
+            <div className="h-[1px] w-8 bg-primary/60" />
+            <span className="text-[10px] uppercase tracking-[0.3em] text-primary font-bold">Bibliothèque de savoirs</span>
+          </motion.div>
+          <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl font-serif font-medium mb-6 tracking-tight">
             Articles de <span className="italic text-primary">fond</span>
           </motion.h1>
-          <motion.p variants={fadeUp} className="text-lg text-muted-foreground max-w-2xl">
-            Explorations intellectuelles pour comprendre le monde et soi-même.
+          <motion.p variants={fadeUp} className="text-lg text-muted-foreground max-w-2xl font-light leading-relaxed">
+            Explorations intellectuelles et analyses stratégiques pour décrypter les enjeux du monde contemporain.
           </motion.p>
         </motion.div>
 
         {loading && (
-          <div className="text-center text-muted-foreground py-20">Chargement des articles…</div>
-        )}
-
-        {error && (
-          <div className="text-center text-destructive py-20">{error}</div>
-        )}
-
-        {!loading && !error && articles.length === 0 && (
-          <div className="text-center text-muted-foreground py-20">
-            Aucun article trouvé. Ajoutez des fichiers HTML dans le dossier <code>public/articles/</code>.
+          <div className="flex flex-col items-center justify-center py-32 gap-4">
+            <div className="w-12 h-12 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+            <p className="text-sm text-muted-foreground animate-pulse">Chargement de la bibliothèque...</p>
           </div>
         )}
 
-        {!loading && !error && articles.length > 0 && (
+        {error && (
+          <div className="text-center text-destructive py-20 bg-destructive/5 rounded-2xl border border-destructive/10">
+            <p className="font-medium">{error}</p>
+            <button onClick={() => window.location.reload()} className="mt-4 text-sm underline">Réessayer</button>
+          </div>
+        )}
+
+        {!loading && !error && (
           <>
-            {/* Barre de recherche et filtres */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mb-8 space-y-4"
-            >
-              {/* Recherche */}
-              <div className="relative">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                />
-                <Input
-                  placeholder="Rechercher un article…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 pr-8 bg-background/60 border-border/50 focus:border-primary/50"
-                />
-                {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            {/* Barre de contrôle Premium */}
+            <div className="mb-12 space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                {/* Recherche élégante */}
+                <div className="lg:col-span-8 relative group">
+                  <Search
+                    size={18}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"
+                  />
+                  <Input
+                    placeholder="Rechercher une thématique, un titre..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="h-14 pl-12 pr-12 bg-card/40 border-border/40 focus:border-primary/40 focus:ring-1 focus:ring-primary/20 rounded-2xl transition-all text-base"
+                  />
+                  <AnimatePresence>
+                    {search && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        onClick={() => setSearch("")}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 text-muted-foreground transition-colors"
+                      >
+                        <X size={12} />
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Sélecteur de tri Premium */}
+                <div className="lg:col-span-4 relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-muted-foreground pointer-events-none">
+                    <ArrowUpDown size={16} />
+                  </div>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    className="w-full h-14 pl-12 pr-10 bg-card/40 border border-border/40 rounded-2xl appearance-none cursor-pointer focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all text-sm font-medium text-foreground"
                   >
-                    <X size={14} />
-                  </button>
-                )}
+                    <option value="recent">Plus récents d'abord</option>
+                    <option value="oldest">Plus anciens d'abord</option>
+                    <option value="title">Ordre alphabétique (A-Z)</option>
+                  </select>
+                  <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                </div>
               </div>
 
-              {/* Filtres par catégorie et tri */}
-              <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 lg:items-end">
-                {/* Catégories — pills horizontalement défilables */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold text-muted-foreground mb-2 uppercase tracking-[0.12em]">
-                    Catégorie
-                  </p>
-                  <div className="relative">
-                    <div
-                      className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 scroll-smooth snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                      role="tablist"
-                      aria-label="Filtrer par catégorie"
-                    >
+              {/* Navigation par Catégories Premium */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                  <Filter size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Filtrer par univers</span>
+                </div>
+                <div className="flex flex-wrap gap-2 md:gap-3">
+                  <button
+                    onClick={() => setSelectedCategory("all")}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300 border ${
+                      selectedCategory === "all"
+                        ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105"
+                        : "bg-card/40 text-muted-foreground border-border/40 hover:border-primary/30 hover:text-foreground"
+                    }`}
+                  >
+                    Tous les articles
+                    <span className="ml-2 opacity-60 font-normal">{articles.length}</span>
+                  </button>
+                  {categories.map((cat) => {
+                    const count = articles.filter((a) => a.category === cat).length;
+                    const active = selectedCategory === cat;
+                    return (
                       <button
-                        type="button"
-                        role="tab"
-                        aria-selected={selectedCategory === "all"}
-                        onClick={() => setSelectedCategory("all")}
-                        className={`shrink-0 snap-start whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all ${
-                          selectedCategory === "all"
-                            ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
-                            : "bg-background/60 text-muted-foreground border-border/50 hover:text-foreground hover:border-primary/40"
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`px-6 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300 border ${
+                          active
+                            ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105"
+                            : "bg-card/40 text-muted-foreground border-border/40 hover:border-primary/30 hover:text-foreground"
                         }`}
                       >
-                        Tous
-                        <span
-                          className={`ml-1.5 text-[10px] tabular-nums ${
-                            selectedCategory === "all"
-                              ? "opacity-80"
-                              : "opacity-60"
-                          }`}
-                        >
-                          {articles.length}
-                        </span>
+                        {cat}
+                        <span className="ml-2 opacity-60 font-normal">{count}</span>
                       </button>
-                      {categories.map((cat) => {
-                        const count = articles.filter(
-                          (a) => a.category === cat
-                        ).length;
-                        const active = selectedCategory === cat;
-                        return (
-                          <button
-                            key={cat}
-                            type="button"
-                            role="tab"
-                            aria-selected={active}
-                            onClick={() => setSelectedCategory(cat)}
-                            className={`shrink-0 snap-start whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all ${
-                              active
-                                ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
-                                : "bg-background/60 text-muted-foreground border-border/50 hover:text-foreground hover:border-primary/40"
-                            }`}
-                          >
-                            {cat}
-                            <span
-                              className={`ml-1.5 text-[10px] tabular-nums ${
-                                active ? "opacity-80" : "opacity-60"
-                              }`}
-                            >
-                              {count}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {/* Edge fade masks pour indiquer le défilement */}
-                    <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-background to-transparent" />
-                    <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-background to-transparent" />
-                  </div>
-                </div>
-
-                {/* Tri — dropdown natif stylé */}
-                <div className="lg:w-56 shrink-0">
-                  <p className="text-[11px] font-semibold text-muted-foreground mb-2 uppercase tracking-[0.12em]">
-                    Trier par
-                  </p>
-                  <div className="relative">
-                    <ArrowUpDown
-                      size={13}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                    />
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value as SortOption)}
-                      className="w-full h-9 pl-9 pr-9 text-xs rounded-md bg-background/60 border border-border/50 hover:border-primary/40 focus:border-primary/50 focus:outline-none transition-colors appearance-none cursor-pointer text-foreground"
-                      aria-label="Trier par"
-                    >
-                      <option value="recent">Plus récents</option>
-                      <option value="oldest">Plus anciens</option>
-                      <option value="title">Titre (A-Z)</option>
-                    </select>
-                    <ChevronDown
-                      size={14}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                    />
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
+            </div>
 
-              {/* Compteur de résultats */}
-              {search && (
-                <p className="text-sm text-muted-foreground">
-                  {filteredArticles.length === 0
-                    ? `Aucun résultat pour « ${search} »`
-                    : `${filteredArticles.length} article${filteredArticles.length !== 1 ? "s" : ""} trouvé${filteredArticles.length !== 1 ? "s" : ""}`}
-                </p>
-              )}
-            </motion.div>
+            {/* Résultats */}
+            <div className="mb-8 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground font-light">
+                Affichage de <span className="text-foreground font-medium">{filteredArticles.length}</span> article{filteredArticles.length > 1 ? 's' : ''}
+              </p>
+            </div>
 
-            {/* Grille d'articles */}
             {filteredArticles.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center py-20 text-muted-foreground"
+                className="text-center py-32 bg-card/20 rounded-3xl border border-dashed border-border/60"
               >
-                <p>Aucun article ne correspond à vos critères.</p>
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search size={24} className="text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium mb-2">Aucun résultat trouvé</h3>
+                <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                  Nous n'avons trouvé aucun article correspondant à votre recherche ou catégorie.
+                </p>
+                <button 
+                  onClick={() => {setSearch(""); setSelectedCategory("all");}}
+                  className="mt-6 text-primary text-sm font-semibold hover:underline"
+                >
+                  Réinitialiser les filtres
+                </button>
               </motion.div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredArticles.map((article, i) => (
                   <Link key={article.slug} href={`/academy/articles/${article.slug}`}>
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      transition={{ delay: (i % 6) * 0.1 }}
-                      className="p-6 border border-border/50 rounded-xl bg-card hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer group h-full hover:shadow-lg hover:shadow-primary/10 flex flex-col gap-3"
+                      transition={{ delay: (i % 6) * 0.05 }}
+                      className="group relative p-8 border border-border/40 rounded-3xl bg-card/30 hover:bg-card/60 hover:border-primary/30 transition-all duration-500 cursor-pointer h-full flex flex-col"
                     >
-                      <div className="flex items-center gap-2 text-xs text-primary font-medium">
-                        <span>{article.icon}</span>
-                        <span>{article.category}</span>
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10">
+                          <span className="text-sm">{article.icon}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-primary">{article.category}</span>
+                        </div>
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{article.readTime} min</span>
                       </div>
-                      <h3 className="font-serif text-lg group-hover:text-primary transition-colors">
+                      
+                      <h3 className="font-serif text-xl md:text-2xl mb-4 group-hover:text-primary transition-colors leading-snug">
                         {article.title}
                       </h3>
-                      {article.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 flex-1">
-                          {article.description}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between text-xs text-muted-foreground mt-auto pt-2">
-                        <span>
-                          {article.date || ""}
-                          {article.date ? " · " : ""}
-                          Lecture • {article.readTime} min
+                      
+                      <p className="text-sm text-muted-foreground line-clamp-3 flex-1 font-light leading-relaxed mb-6">
+                        {article.description}
+                      </p>
+                      
+                      <div className="flex items-center justify-between pt-6 border-t border-border/40 mt-auto">
+                        <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">
+                          {article.date}
                         </span>
-                        <span className="text-primary group-hover:translate-x-1 transition-transform">
-                          →
-                        </span>
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                          <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                        </div>
                       </div>
                     </motion.div>
                   </Link>
