@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+  <html lang="fr">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Tu te proclames croyant, spirituel, engagé dans une quête de sens, mais au fond, tes actes racontent une toute autre histoire. Tu te dis « j’ai la foi », pourtant, chaque jour, tu agis comme si cette…"/>
+    <meta name="lumenia:title" content="Tes actions contredisent ta foi"/>
+    <meta name="lumenia:category" content="Foi"/>
+    <meta name="lumenia:date" content="27 avril 2026"/>
+    <meta name="lumenia:icon" content="⚖️"/>
+    <title>Tes actions contredisent ta foi - Lumenia</title>
+    <link rel="icon" type="image/svg+xml" href="/attached_assets/lumenia-icon.svg"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/lumenia.css"/>
+    <style>
+      :root {
+        --accent: #6c63ff;
+        --accent-soft: #f1f0ff;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --success: #0f766e;
+        --warning: #b45309;
+        --danger: #b91c1c;
+        --card: #ffffff;
+        --bg-soft: #f8fafc;
+      }
+      body { color: var(--ink); }
+      .article-body { max-width: 980px; }
+      .training-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .5rem .9rem;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 700;
+        margin: 1rem 0 1.25rem;
+      }
+      .toc, .notice, .exercise, .template-box, .summary-box {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 1.25rem;
+        margin: 1.25rem 0 1.75rem;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+      }
+      .toc {
+        background: linear-gradient(180deg, #ffffff 0%, #fafaff 100%);
+      }
+      .toc h2, .notice h3, .exercise h3, .template-box h3, .summary-box h3 { margin-top: 0; }
+      .toc ol { padding-left: 1.25rem; margin-bottom: 0; }
+      .toc li { margin: .55rem 0; }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin: 1.25rem 0 1.75rem;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 1rem;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+      }
+      .card h3, .card h4 { margin-top: 0; }
+      .mini-label {
+        display: inline-block;
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--muted);
+        margin-bottom: .4rem;
+        font-weight: 700;
+      }
+      .notice {
+        border-left: 6px solid var(--accent);
+        background: #fcfcff;
+      }
+      .notice.warning { border-left-color: var(--warning); background: #fffaf3; }
+      .notice.success { border-left-color: var(--success); background: #f0fdfa; }
+      .notice.danger { border-left-color: var(--danger); background: #fff5f5; }
+      .checklist li, .steps li { margin: .45rem 0; }
+      .metrics-table, .week-plan {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: .97rem;
+      }
+      .metrics-table th, .metrics-table td,
+      .week-plan th, .week-plan td {
+        border: 1px solid var(--line);
+        padding: .85rem;
+        vertical-align: top;
+        text-align: left;
+      }
+      .metrics-table th, .week-plan th {
+        background: #f8fafc;
+        font-weight: 700;
+      }
+      blockquote {
+        border-left: 4px solid var(--accent);
+        background: #f8f7ff;
+        padding: 1rem 1.1rem;
+        border-radius: 0 14px 14px 0;
+        color: #4338ca;
+      }
+      .quote-source { color: var(--muted); font-size: .92rem; }
+      details {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: .95rem 1rem;
+        background: #fff;
+        margin: .85rem 0;
+      }
+      summary { cursor: pointer; font-weight: 700; }
+      .pill-row { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1rem 0; }
+      .pill {
+        padding: .45rem .8rem;
+        border-radius: 999px;
+        background: #f3f4f6;
+        color: #374151;
+        font-size: .92rem;
+        font-weight: 600;
+      }
+      .module-title { scroll-margin-top: 90px; }
+      .footer-note { color: var(--muted); font-size: .95rem; margin-top: 1rem; }
+      .article-figure { margin: 1.5rem 0 2rem; text-align: center; }
+      .article-figure img {
+        width: 100%;
+        max-width: 980px;
+        height: auto;
+        border-radius: 18px;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, .12);
+        display: block;
+        margin: 0 auto;
+      }
+      @media (max-width: 720px) {
+        .metrics-table, .week-plan { font-size: .92rem; }
+      }
+    </style>
+  </head>
+  <body>
+  <header class="site-header">
+    <a class="logo" href="/"><img src="/attached_assets/lumenia-icon.svg" alt=""/><span class="logo-text">Lumenia</span></a>
+    <nav class="site-nav">
+      <a href="/articles">Articles</a>
+      <a href="/formations">Formations</a>
+      <a href="/videos">Vidéos</a>
+      <a href="/communaute">Communauté</a>
+      <a href="/a-propos">À propos</a>
+      <a href="/contact">Contact</a>
+      <a class="btn-cta" href="/contact">Newsletter</a>
+    </nav>
+    <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="/">Accueil</a><a href="/articles">Articles</a><a href="/formations">Formations</a>
+    <a href="/videos">Vidéos</a><a href="/communaute">Communauté</a><a href="/a-propos">À propos</a>
+    <a href="/contact">Contact</a><a href="/contact" class="m-cta">Newsletter</a>
+  </div>
+
+  <div class="article-header">
+    <div class="article-meta">
+      <span class="tag">Foi</span>
+      <span class="article-date">27 avril 2026</span>
+      <span class="article-read">· ~12 min de lecture</span>
+    </div>
+    <h1>Tes actions contredisent ta foi</h1>
+    <p class="article-intro">Tu te proclames croyant, spirituel, engagé dans une quête de sens, mais au fond, tes actes racontent une toute autre histoire. Tu te dis « j’ai la foi », pourtant, chaque jour, tu agis comme si cette…</p>
+  </div>
+
+  <div class="article-body">
+    <a class="back-link" href="/articles">← Retour aux articles</a>
+
+    <div class="training-badge">⚖️ Foi · Article approfondi</div>
+  
+    <figure class="article-figure">
+      <img src="images/art-18-a.jpg" alt="Tes actions contredisent ta foi" loading="lazy"/>
+    </figure>
+
+    <div class="summary-box">
+      <h3>En une phrase</h3>
+      <p><strong>Tu te proclames croyant, spirituel, engagé dans une quête de sens, mais au fond, tes actes racontent une toute autre histoire.</strong> Tu te dis « j’ai la foi », pourtant, chaque jour, tu agis comme si cette foi n’était qu’un vague concept, une idée abstraite, déconnectée de ta réalité. Cette déchirure intérieure crée une dissonance douloureuse — entre ce que tu crois être et ce que tu es réellement. Pourquoi cette contradiction ? Pourquoi le fossé entre tes paroles et tes actions est-il si vaste, et surtout, comment le combler ?</p>
+    </div>
+
+    <div class="toc">
+      <h2>Sommaire</h2>
+      <ol>
+        <li><a href="#s-1-le-probleme-reel-la-fracture-entre-foi-e">Le problème réel : la fracture entre foi et actes</a></li>
+      <li><a href="#s-2-deconstruction-l-erreur-fondamentale-que">Déconstruction : l’erreur fondamentale que nous faisons tous</a></li>
+      <li><a href="#s-3-revelation-cle-la-foi-est-une-force-inca">Révélation clé : la foi est une force incarnée, pas un simple idéal</a></li>
+      <li><a href="#s-4-solution-concrete-comment-aligner-tes-ac">Solution concrète : comment aligner tes actions avec ta foi</a></li>
+      <li><a href="#s-5-conclusion-impactante">Conclusion impactante</a></li>
+      <li><a href="#s-6-appel-a-l-action">Appel à l’action</a></li>
+      </ol>
+    </div>
+  
+    <section id="s-1-le-probleme-reel-la-fracture-entre-foi-e">
+      <h2 class="module-title">Le problème réel : la fracture entre foi et actes</h2>
+  <p>La plupart des personnes engagées spirituellement ou religieusement font face à ce même dilemme silencieux : elles professent une foi puissante, mais dans leur vie quotidienne, leurs comportements ne la confirment pas. Elles prient, méditent, lisent des textes sacrés, mais continuent à agir avec colère, peur, jugement, ego, ou hypocrisie. Cette fracture n’est pas qu’un simple décalage, c’est une faille qui mine profondément la paix intérieure et la cohérence de l’être.</p>
+
+<p>Tu connais cette sensation : tu sais ce qui est « juste », ce qui élèverait ton âme, mais tu choisis la facilité, la fuite, le confort immédiat ou la satisfaction illusoire. Tu te dis que la foi est là, que ça viendra plus tard, que c’est normal d’être « humain ». Pourtant, cette contradiction te ronge, te fait douter, te fait culpabiliser. Elle est une source de souffrance invisible, mais bien réelle.</p>
+    </section>
+
+    <section id="s-2-deconstruction-l-erreur-fondamentale-que">
+      <h2 class="module-title">Déconstruction : l’erreur fondamentale que nous faisons tous</h2>
+      <div class="notice warning">
+  <p>Le piège est souvent dans la compréhension même de la foi. Nous la réduisons à un simple état intellectuel ou émotionnel — croire en quelque chose, ressentir une inspiration, vouer un attachement à une idée spirituelle. Mais la foi véritable ne se limite pas à un sentiment ou à un concept : elle est un engagement total, un alignement radical entre ce que l’on croit et ce que l’on fait.</p>
+
+<p>Le malentendu est que nous pensons pouvoir séparer notre foi de nos actions. Que l’on peut croire en la compassion, mais agir avec égoïsme. Que l’on peut croire en la paix intérieure, mais cultiver la colère. Que l’on peut croire en la lumière, mais nourrir l’ombre. Cette dissociation est une illusion dangereuse.</p>
+
+<p>Au fond, ta foi, si elle est vivante, doit imprégner chacune de tes décisions, chacune de tes réactions, chacune de tes pensées. Sinon, ce n’est pas la foi, c’est une croyance passive, sans force transformative. Le vrai travail spirituel ne commence pas dans les doctrines, mais dans l’incarnation de ces principes dans ta vie de tous les jours — dans tes gestes, dans ta façon d’aimer, de pardonner, de te relever.</p>
+      </div>
+    </section>
+
+    <section id="s-3-revelation-cle-la-foi-est-une-force-inca">
+      <h2 class="module-title">Révélation clé : la foi est une force incarnée, pas un simple idéal</h2>
+  <p>Voici la vérité que peu osent dire : <strong>ta foi ne vaut rien si elle ne transforme pas ta manière d’être.</strong> Tu peux réciter des prières, méditer des heures, lire des livres sacrés, si tes actions ne reflètent pas cette foi, tu es dans l’illusion. Cette vérité est dure, mais libératrice.</p>
+
+<p>La foi est une force vivante, une énergie qui doit traverser ton corps et ton esprit pour réorienter ta vie. Elle n’est pas un refuge où se cacher, mais un feu qui purifie. Ce feu brûle les vieilles habitudes, les peurs, les mensonges que tu te racontes. Il te pousse à changer, à te confronter à toi-même, à être honnête, à être courageux.</p>
+
+<p>Comprends ceci : la spiritualité véritable est une révolution intérieure. Elle bouleverse tes certitudes et te force à devenir la personne que tu prétends admirer. Ce n’est pas un chemin de confort, c’est un chemin de vérité et d’intégrité radicale.</p>
+    </section>
+
+    <figure class="article-figure">
+      <img src="images/art-18-b.jpg" alt="Tes actions contredisent ta foi" loading="lazy"/>
+    </figure>
+
+    <section id="s-4-solution-concrete-comment-aligner-tes-ac">
+      <h2 class="module-title">Solution concrète : comment aligner tes actions avec ta foi</h2>
+      <div class="template-box">
+  <p>Si tu veux sortir de cette contradiction dévastatrice, voici les étapes précises et non négociables :</p>
+
+<ul class="checklist">
+<li><strong>1. Prends conscience sans jugement.</strong> Observe tes actes, tes paroles, tes pensées. Où es-tu en contradiction avec ta foi ? Sois honnête, mais ne te flagelle pas. La conscience est la première clé pour changer.</li>
+<li><strong>2. Questionne tes croyances limitantes.</strong> Souvent, derrière tes actions contraires à ta foi se cachent des peurs, des blessures, des conditionnements. Identifie-les clairement. Par exemple : « J’ai peur d’être rejeté si je pardonne » ou « Je crois que je dois me protéger en étant agressif. »</li>
+<li><strong>3. Engage-toi dans de petits actes concrets.</strong> La foi grandit dans l’action, pas dans l’attente. Choisis une situation où tu peux incarner ta foi dès aujourd’hui — pardonner quelqu’un, aider sans attendre, parler avec bienveillance même quand tu es fatigué, dire la vérité même si c’est dur.</li>
+<li><strong>4. Pratique la vigilance intérieure.</strong> Reste attentif à tes motivations. Chaque fois que tu agis, demande-toi : « Est-ce que cela reflète ma foi ? Est-ce que cela élève ma conscience et celle des autres ? » Cette discipline forge l’intégrité.</li>
+<li><strong>5. Cultive la patience et la compassion envers toi-même.</strong> Le chemin n’est pas linéaire. Il y aura des rechutes, des moments d’échec. Accueille-les comme des enseignements, pas comme des preuves d’incapacité.</li>
+<li><strong>6. Nourris ta foi authentique par la connexion.</strong> Qu’elle soit prière, méditation, lecture, dialogue avec des mentors spirituels, ou immersion dans la nature, ce lien nourrit ta force intérieure et te rappelle ta vraie nature.</li>
+</ul>
+
+<p>Ces étapes ne sont pas des recettes magiques, mais des engagements quotidiens. La transformation profonde se construit dans la répétition humble et consciente.</p>
+      </div>
+    </section>
+
+    <section id="s-5-conclusion-impactante">
+      <h2 class="module-title">Conclusion impactante</h2>
+      <div class="notice success">
+  <p>Tu ne peux pas prétendre à la foi et rester dans la contradiction permanente entre tes croyances et tes actes. Cette double vie te condamne à une souffrance sourde, à un vide intérieur qui s’agrandit. La véritable foi est une révolution intérieure radicale, un acte de courage qui bouleverse ta manière d’être au monde.</p>
+
+<p>Arrête de fuir cette vérité. Regarde-toi avec honnêteté et décide aujourd’hui d’incarner pleinement ta foi. Car c’est là, dans l’intégrité de tes actions, que se trouve la paix véritable et la puissance transformatrice. Là où la foi cesse d’être une idée pour devenir une force vivante, ta vie change du tout au tout.</p>
+      </div>
+    </section>
+
+    <section id="s-6-appel-a-l-action">
+      <h2 class="module-title">Appel à l’action</h2>
+      <div class="notice">
+  <p><strong>Ne reporte pas cette prise de conscience à demain.</strong> Fais l’exercice maintenant : choisis une action que tu as différée parce qu’elle te fait peur ou te met face à ta foi. Engage-toi à la réaliser dans les prochaines 24 heures, avec conscience et sincérité. Observe ce que cela génère en toi.</p>
+
+<p>Si tu ressens le besoin d’un accompagnement pour franchir ce pas, n’hésite pas à chercher un guide, un mentor ou une communauté sincère qui t’aidera à incarner ta foi au quotidien. La transformation est un chemin solitaire, mais tu n’as pas à le faire seul.</p>
+
+<p>Le moment est venu d’arrêter d’être spectateur de ta foi et de devenir acteur de ta vérité. Tes actions doivent enfin refléter la lumière que tu portes en toi.</p>
+      </div>
+    </section>
+
+    <div class="article-footer">
+      <a class="back-link" href="/articles">← Voir tous les articles</a>
+      <p class="footer-note">Article publié dans la catégorie « Foi » sur Lumenia. Reprenez le pouvoir sur votre vie intérieure, un article à la fois.</p>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a class="logo" href="/"><img src="/attached_assets/lumenia-icon.svg" alt=""/><span class="logo-text">Lumenia</span></a>
+        <p>Votre source quotidienne de lumière, de savoir et d'inspiration.</p>
+      </div>
+      <div class="footer-links"><h4>Contenu</h4>
+        <a href="/articles">Articles</a><a href="/formations">Formations</a>
+        <a href="/videos">Vidéos</a><a href="/communaute">Communauté</a>
+      </div>
+    </div>
+    <div class="footer-bottom">&copy; 2026 Lumenia &mdash; Savoir &amp; Inspiration</div>
+  </footer>
+  <nav class="bottom-nav" aria-label="Navigation principale">
+    <a href="/"><span class="bn-icon"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>Accueil</a>
+    <a href="/articles"><span class="bn-icon"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></span>Articles</a>
+    <a href="/formations"><span class="bn-icon"><svg viewBox="0 0 24 24"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg></span>Formations</a>
+    <a href="/videos"><span class="bn-icon"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></span>Vidéos</a>
+    <a href="/communaute"><span class="bn-icon"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></span>Communauté</a>
+  </nav>
+  <button class="back-to-top" id="back-to-top" aria-label="Retour en haut">
+    <svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+  </button>
+  <script src="/js/lumenia.js"></script>
+  <script type="module" src="/js/interactions.js"></script>
+  </body>
+  </html>

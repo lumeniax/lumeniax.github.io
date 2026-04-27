@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+  <html lang="fr">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Tu t’adresses au ciel chaque jour, implorant un signe, une aide, une réponse. Pourtant, malgré ces prières répétées, tu sens que rien ne change. Pourquoi ? Parce que tu refuses de regarder en face…"/>
+    <meta name="lumenia:title" content="Tu pries mais tu refuses de voir ça"/>
+    <meta name="lumenia:category" content="Spiritualité"/>
+    <meta name="lumenia:date" content="27 avril 2026"/>
+    <meta name="lumenia:icon" content="🙏"/>
+    <title>Tu pries mais tu refuses de voir ça - Lumenia</title>
+    <link rel="icon" type="image/svg+xml" href="/attached_assets/lumenia-icon.svg"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/css/lumenia.css"/>
+    <style>
+      :root {
+        --accent: #6c63ff;
+        --accent-soft: #f1f0ff;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --success: #0f766e;
+        --warning: #b45309;
+        --danger: #b91c1c;
+        --card: #ffffff;
+        --bg-soft: #f8fafc;
+      }
+      body { color: var(--ink); }
+      .article-body { max-width: 980px; }
+      .training-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .5rem .9rem;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 700;
+        margin: 1rem 0 1.25rem;
+      }
+      .toc, .notice, .exercise, .template-box, .summary-box {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 1.25rem;
+        margin: 1.25rem 0 1.75rem;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+      }
+      .toc {
+        background: linear-gradient(180deg, #ffffff 0%, #fafaff 100%);
+      }
+      .toc h2, .notice h3, .exercise h3, .template-box h3, .summary-box h3 { margin-top: 0; }
+      .toc ol { padding-left: 1.25rem; margin-bottom: 0; }
+      .toc li { margin: .55rem 0; }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin: 1.25rem 0 1.75rem;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 1rem;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+      }
+      .card h3, .card h4 { margin-top: 0; }
+      .mini-label {
+        display: inline-block;
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--muted);
+        margin-bottom: .4rem;
+        font-weight: 700;
+      }
+      .notice {
+        border-left: 6px solid var(--accent);
+        background: #fcfcff;
+      }
+      .notice.warning { border-left-color: var(--warning); background: #fffaf3; }
+      .notice.success { border-left-color: var(--success); background: #f0fdfa; }
+      .notice.danger { border-left-color: var(--danger); background: #fff5f5; }
+      .checklist li, .steps li { margin: .45rem 0; }
+      .metrics-table, .week-plan {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: .97rem;
+      }
+      .metrics-table th, .metrics-table td,
+      .week-plan th, .week-plan td {
+        border: 1px solid var(--line);
+        padding: .85rem;
+        vertical-align: top;
+        text-align: left;
+      }
+      .metrics-table th, .week-plan th {
+        background: #f8fafc;
+        font-weight: 700;
+      }
+      blockquote {
+        border-left: 4px solid var(--accent);
+        background: #f8f7ff;
+        padding: 1rem 1.1rem;
+        border-radius: 0 14px 14px 0;
+        color: #4338ca;
+      }
+      .quote-source { color: var(--muted); font-size: .92rem; }
+      details {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: .95rem 1rem;
+        background: #fff;
+        margin: .85rem 0;
+      }
+      summary { cursor: pointer; font-weight: 700; }
+      .pill-row { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1rem 0; }
+      .pill {
+        padding: .45rem .8rem;
+        border-radius: 999px;
+        background: #f3f4f6;
+        color: #374151;
+        font-size: .92rem;
+        font-weight: 600;
+      }
+      .module-title { scroll-margin-top: 90px; }
+      .footer-note { color: var(--muted); font-size: .95rem; margin-top: 1rem; }
+      .article-figure { margin: 1.5rem 0 2rem; text-align: center; }
+      .article-figure img {
+        width: 100%;
+        max-width: 980px;
+        height: auto;
+        border-radius: 18px;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, .12);
+        display: block;
+        margin: 0 auto;
+      }
+      @media (max-width: 720px) {
+        .metrics-table, .week-plan { font-size: .92rem; }
+      }
+    </style>
+  </head>
+  <body>
+  <header class="site-header">
+    <a class="logo" href="/"><img src="/attached_assets/lumenia-icon.svg" alt=""/><span class="logo-text">Lumenia</span></a>
+    <nav class="site-nav">
+      <a href="/articles">Articles</a>
+      <a href="/formations">Formations</a>
+      <a href="/videos">Vidéos</a>
+      <a href="/communaute">Communauté</a>
+      <a href="/a-propos">À propos</a>
+      <a href="/contact">Contact</a>
+      <a class="btn-cta" href="/contact">Newsletter</a>
+    </nav>
+    <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="/">Accueil</a><a href="/articles">Articles</a><a href="/formations">Formations</a>
+    <a href="/videos">Vidéos</a><a href="/communaute">Communauté</a><a href="/a-propos">À propos</a>
+    <a href="/contact">Contact</a><a href="/contact" class="m-cta">Newsletter</a>
+  </div>
+
+  <div class="article-header">
+    <div class="article-meta">
+      <span class="tag">Spiritualité</span>
+      <span class="article-date">27 avril 2026</span>
+      <span class="article-read">· ~12 min de lecture</span>
+    </div>
+    <h1>Tu pries mais tu refuses de voir ça</h1>
+    <p class="article-intro">Tu t’adresses au ciel chaque jour, implorant un signe, une aide, une réponse. Pourtant, malgré ces prières répétées, tu sens que rien ne change. Pourquoi ? Parce que tu refuses de regarder en face…</p>
+  </div>
+
+  <div class="article-body">
+    <a class="back-link" href="/articles">← Retour aux articles</a>
+
+    <div class="training-badge">🙏 Spiritualité · Article approfondi</div>
+  
+    <figure class="article-figure">
+      <img src="images/art-16-a.jpg" alt="Tu pries mais tu refuses de voir ça" loading="lazy"/>
+    </figure>
+
+    <div class="summary-box">
+      <h3>En une phrase</h3>
+      <p><strong>Tu t’adresses au ciel chaque jour, implorant un signe, une aide, une réponse. Pourtant, malgré ces prières répétées, tu sens que rien ne change. Pourquoi ? Parce que tu refuses de regarder en face cette vérité dérangeante que ton âme essaie de te murmurer depuis longtemps.</strong> Ce que tu ignores bloque ta transformation, te maintient dans une boucle d’attente et de frustration. Et si la véritable réponse n’était pas « là-haut », mais bien « ici », en toi ?</p>
+    </div>
+
+    <div class="toc">
+      <h2>Sommaire</h2>
+      <ol>
+        <li><a href="#s-1-le-probleme-reel-tu-cherches-des-miracle">Le problème réel : tu cherches des miracles sans voir tes propres chaînes</a></li>
+      <li><a href="#s-2-deconstruction-l-erreur-fatale-dans-ta-r">Déconstruction : l’erreur fatale dans ta relation à la prière</a></li>
+      <li><a href="#s-3-revelation-cle-la-priere-veritable-comme">Révélation clé : la prière véritable commence par le regard intérieur courageux</a></li>
+      <li><a href="#s-4-solution-concrete-comment-pratiquer-une-">Solution concrète : comment pratiquer une prière qui éclaire et libère</a></li>
+      <li><a href="#s-5-conclusion-impactante">Conclusion impactante</a></li>
+      <li><a href="#s-6-appel-a-l-action">Appel à l’action</a></li>
+      </ol>
+    </div>
+  
+    <section id="s-1-le-probleme-reel-tu-cherches-des-miracle">
+      <h2 class="module-title">Le problème réel : tu cherches des miracles sans voir tes propres chaînes</h2>
+  <p>Combien de fois as-tu prié en espérant que ta vie bascule, que la chance tourne, que quelqu’un vienne te sauver ? Combien de fois as-tu fermé les yeux en espérant que la douleur disparaisse, que la solitude soit comblée, que le sens de ta vie apparaisse comme par magie ?</p>
+
+<p>La vérité, c’est que tu es en train de construire ton propre piège. Tu demandes, tu implores, tu espères, mais tu refuses de regarder ce qui cloche en toi et autour de toi. Tu pries pour que les autres changent, que le monde soit meilleur, que tes circonstances s’améliorent, sans jamais te demander si tu es prêt à changer toi-même.</p>
+
+<p>Ce refus de voir, c’est un mur invisible, mais infranchissable. Il te protège de la douleur, de la responsabilité, de l’effort. Et pourtant, c’est ce même mur qui éteint la lumière que tu cherches désespérément dans tes prières.</p>
+    </section>
+
+    <section id="s-2-deconstruction-l-erreur-fatale-dans-ta-r">
+      <h2 class="module-title">Déconstruction : l’erreur fatale dans ta relation à la prière</h2>
+      <div class="notice warning">
+  <p>Il y a une idée fausse profondément ancrée dans notre culture et notre spiritualité : prier, c’est demander à une puissance extérieure de changer notre vie, c’est espérer un miracle qui nous décharge de notre part de responsabilité. Cette croyance est un leurre qui te maintient dans une posture passive.</p>
+
+<p>La prière n’est pas une baguette magique. Ce n’est pas une commande passée au ciel pour qu’il fasse le travail à ta place. La véritable prière est un acte de présence, de conscience, un dialogue intime où tu acceptes d’être vu, d’être honnête avec toi-même. Elle est une invitation à regarder en face ce que tu refuses de voir.</p>
+
+<p>Quand tu pries sans vouloir voir tes propres ombres, tes peurs, tes résistances, tu fais de la prière un échappatoire, un refuge illusoire. Tu invoques la lumière tout en gardant les volets fermés. C’est là que réside l’erreur fatale.</p>
+      </div>
+    </section>
+
+    <section id="s-3-revelation-cle-la-priere-veritable-comme">
+      <h2 class="module-title">Révélation clé : la prière véritable commence par le regard intérieur courageux</h2>
+  <p>La prière qui transforme est celle qui te pousse à te regarder avec brutalité et tendresse. Elle t’ouvre à la vérité de ta condition humaine, à ta part d’ombre et de lumière, à tes blessures et à tes blessures non guéries. Elle te pousse à reconnaître tes failles, tes blocages, tes croyances limitantes.</p>
+
+<p>Ce regard intérieur n’est pas confortable, il est même douloureux parfois. Mais il est la clé qui ouvre la porte du changement. Sans cette auto-observation honnête, la prière reste un vœu pieux, une supplication vaine.</p>
+
+<p>En fait, tu dois comprendre que le divin ne se manifeste pas uniquement dans des réponses extérieures, mais dans ta capacité à accueillir ce que tu refuses de voir en toi et à transformer cette réalité intérieure.</p>
+    </section>
+
+    <figure class="article-figure">
+      <img src="images/art-16-b.jpg" alt="Tu pries mais tu refuses de voir ça" loading="lazy"/>
+    </figure>
+
+    <section id="s-4-solution-concrete-comment-pratiquer-une-">
+      <h2 class="module-title">Solution concrète : comment pratiquer une prière qui éclaire et libère</h2>
+      <div class="template-box">
+  <p>Voici un parcours en 5 étapes pour transformer ta prière en un acte de guérison intérieure :</p>
+
+<ul class="checklist">
+<li><strong>1. Crée un espace sacré de silence</strong> : Choisis un moment et un lieu où tu ne seras pas dérangé. Assieds-toi en silence, ferme les yeux et respire profondément. Prépare-toi à te rencontrer.</li>
+<li><strong>2. Pose-toi la question qui dérange</strong> : Au lieu de demander « Change ma vie », demande-toi « Qu’est-ce que je refuse de voir en moi ? » ou « Quelle vérité est cachée derrière ma souffrance ? »</li>
+<li><strong>3. Observe sans juger</strong> : Accueille les pensées, émotions, images ou souvenirs qui remontent. Ne lutte pas contre eux, ne cherche pas à les chasser. Laisse-les être. C’est là que la lumière commence à pénétrer l’ombre.</li>
+<li><strong>4. Écris ce qui émerge</strong> : Mets par écrit ce que tu as découvert. Exprimer tes prises de conscience par l’écriture ancre cette vérité et libère l’énergie bloquée.</li>
+<li><strong>5. Engage-toi dans une action juste et humble</strong> : La prise de conscience doit se traduire en gestes concrets, même petits. Ce peut être pardonner, demander pardon, modifier une habitude, exprimer une émotion retenue, chercher de l’aide.</li>
+</ul>
+
+<p>Cette méthode transforme ta prière en un acte de courage et de responsabilité. Elle te reconnecte à ta puissance intérieure et ouvre la voie à une transformation réelle, pas à une illusion.</p>
+      </div>
+    </section>
+
+    <section id="s-5-conclusion-impactante">
+      <h2 class="module-title">Conclusion impactante</h2>
+      <div class="notice success">
+  <p>Prier sans regarder en soi, c’est comme crier dans une forêt sans écouter l’écho. Tu demandes que le monde change, mais tu refuses d’être ce changement. Cette contradiction est la source de ta frustration et de ta stagnation.</p>
+
+<p>La véritable puissance de la prière réside dans ta capacité à te voir, à te reconnaître dans ta totalité, à accepter tes parts d’ombre et de lumière. Ce n’est qu’en embrassant ta réalité intérieure que tu peux devenir un canal vivant de transformation, pour toi et pour le monde.</p>
+
+<p>Alors, cesse de prier en aveugle. Ose le regard intérieur qui dérange, accepte la vérité que tu refuses de voir, et découvre la force infinie qui sommeille en toi.</p>
+      </div>
+    </section>
+
+    <section id="s-6-appel-a-l-action">
+      <h2 class="module-title">Appel à l’action</h2>
+      <div class="notice">
+  <p><strong>Aujourd’hui, prends ce temps pour toi. Trouve un endroit calme, ferme les yeux, et pose-toi cette question : « Qu’est-ce que je refuse de voir en moi ? »</strong> Laisse la réponse venir sans résistance. Puis, écris ce qui t’arrive. Ce geste simple est le premier pas vers une transformation profonde.</p>
+
+<p>Si tu souhaites aller plus loin, rejoins un groupe de méditation ou un atelier de développement personnel qui t’accompagnera dans ce voyage intérieur. Ne reste pas seul face à ce mur invisible. Demander de l’aide est aussi un acte de courage et de prière, la plus puissante qui soit.</p>
+
+<p>Tu pries. Maintenant, ose voir.</p>
+      </div>
+    </section>
+
+    <div class="article-footer">
+      <a class="back-link" href="/articles">← Voir tous les articles</a>
+      <p class="footer-note">Article publié dans la catégorie « Spiritualité » sur Lumenia. Reprenez le pouvoir sur votre vie intérieure, un article à la fois.</p>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a class="logo" href="/"><img src="/attached_assets/lumenia-icon.svg" alt=""/><span class="logo-text">Lumenia</span></a>
+        <p>Votre source quotidienne de lumière, de savoir et d'inspiration.</p>
+      </div>
+      <div class="footer-links"><h4>Contenu</h4>
+        <a href="/articles">Articles</a><a href="/formations">Formations</a>
+        <a href="/videos">Vidéos</a><a href="/communaute">Communauté</a>
+      </div>
+    </div>
+    <div class="footer-bottom">&copy; 2026 Lumenia &mdash; Savoir &amp; Inspiration</div>
+  </footer>
+  <nav class="bottom-nav" aria-label="Navigation principale">
+    <a href="/"><span class="bn-icon"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>Accueil</a>
+    <a href="/articles"><span class="bn-icon"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></span>Articles</a>
+    <a href="/formations"><span class="bn-icon"><svg viewBox="0 0 24 24"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg></span>Formations</a>
+    <a href="/videos"><span class="bn-icon"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></span>Vidéos</a>
+    <a href="/communaute"><span class="bn-icon"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></span>Communauté</a>
+  </nav>
+  <button class="back-to-top" id="back-to-top" aria-label="Retour en haut">
+    <svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+  </button>
+  <script src="/js/lumenia.js"></script>
+  <script type="module" src="/js/interactions.js"></script>
+  </body>
+  </html>
