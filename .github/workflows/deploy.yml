@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -33,6 +35,18 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Commit generated files
+        run: |
+          git config --local user.email "contact@lumeniax.com"
+          git config --local user.name "Lumeniax (Bot)"
+          git add public/articles/articles.json public/articles/content/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update articles manifest and content [skip ci]"
+            git push origin main
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

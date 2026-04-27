@@ -23,6 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Generated files
-public/articles/articles.json
-public/articles/content/
+# Generated files (managed by GitHub Actions)
+# public/articles/articles.json
+# public/articles/content/
