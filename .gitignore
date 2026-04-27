@@ -22,4 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-dist/
+
+# Generated files
+public/articles/articles.json
+public/articles/content/
