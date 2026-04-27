@@ -28,7 +28,9 @@ export default function AcademyArticles() {
   const [sortBy, setSortBy] = useState<SortOption>("recent");
 
   useEffect(() => {
-    fetch("/articles/articles.json")
+    // Ajout d'un timestamp pour éviter le cache navigateur et garantir l'instantanéité
+    const timestamp = new Date().getTime();
+    fetch(`/articles/articles.json?t=${timestamp}`)
       .then((res) => {
         if (!res.ok) throw new Error("Impossible de charger les articles.");
         return res.json();
@@ -38,6 +40,7 @@ export default function AcademyArticles() {
         setLoading(false);
       })
       .catch((err) => {
+        console.error("Erreur chargement articles:", err);
         setError(err.message);
         setLoading(false);
       });
