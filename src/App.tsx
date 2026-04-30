@@ -21,6 +21,7 @@ import AcademyCommunaute from "@/pages/AcademyCommunaute";
 import ForumSpace from "@/pages/ForumSpace";
 import ForumPost from "@/pages/ForumPost";
 import About from "@/pages/About";
+import LumeniaxDemo from "@/pages/LumeniaxDemo";
 import Contact from "@/pages/Contact";
 import MentionsLegales from "@/pages/MentionsLegales";
 import PolitiqueConfidentialite from "@/pages/PolitiqueConfidentialite";
@@ -55,6 +56,7 @@ function Router() {
 
         <Route path="/about" component={About} />
         <Route path="/contact" component={Contact} />
+        <Route path="/lumeniax" component={LumeniaxDemo} />
 
         {/* Legal */}
         <Route path="/mentions-legales" component={MentionsLegales} />

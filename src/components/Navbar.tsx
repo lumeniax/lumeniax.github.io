@@ -86,6 +86,12 @@ export function Navbar() {
             {isAcademy && <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary to-accent rounded-full" />}
           </div>
 
+          <Link href="/lumeniax">
+            <span className={`text-sm font-semibold tracking-wide transition-all duration-300 ${location === '/lumeniax' ? 'text-primary drop-shadow-lg' : 'text-foreground/70 hover:text-primary hover:drop-shadow-md'}`}>
+              LUMENIAX
+            </span>
+          </Link>
+
           <Link href="/about">
             <span className={`text-sm font-semibold tracking-wide transition-all duration-300 ${location === '/about' ? 'text-primary drop-shadow-lg' : 'text-foreground/70 hover:text-primary hover:drop-shadow-md'}`}>
               À PROPOS
@@ -161,6 +167,10 @@ export function Navbar() {
                 </div>
                 <ChevronRight size={18} className="text-secondary/70 group-hover:translate-x-1 transition-transform" />
               </div>
+            </Link>
+
+            <Link href="/lumeniax" onClick={() => setMobileMenuOpen(false)}>
+              <span className="block py-2 text-sm font-semibold hover:text-primary transition-colors duration-300">LUMENIAX</span>
             </Link>
 
             <Link href="/about" onClick={() => setMobileMenuOpen(false)}>

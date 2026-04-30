@@ -40,6 +40,8 @@ export interface ArticleInput {
   icon?: string;
 }
 
+import { generateLumeniaxTrigger } from "./lumeniax-triggers";
+
 const CACHE_PREFIX = "lumeniax:viral-summary:v1:";
 
 // ── Détection émotionnelle ────────────────────────────────────────────────────
@@ -354,13 +356,16 @@ function runHeuristicSummary(article: ArticleInput): ViralSummary {
     `${baseEmoji} ${hook}\n\n${trimmedBest}\n\n${SITE_HANDLE} ${hashtagsTwitter}`
   );
 
+  // Intégration du Moteur de déclencheurs psychologiques adaptatifs – Lumeniax
+  const lumeniax = generateLumeniaxTrigger(article.content || article.description || article.title);
+
   const variants: Record<ShareNetwork, string> = {
-    default: text,
-    whatsapp: whatsappBody,
-    facebook: facebookBody,
-    messenger: messengerBody,
-    telegram: telegramBody,
-    twitter: twitterBody,
+    default: lumeniax.fullOutput,
+    whatsapp: lumeniax.fullOutput,
+    facebook: lumeniax.fullOutput,
+    messenger: lumeniax.fullOutput,
+    telegram: lumeniax.fullOutput,
+    twitter: twitterBody, // Twitter reste spécifique pour la limite de caractères
   };
 
   return { text, score, emojis, hook, intro, outline, variants };
