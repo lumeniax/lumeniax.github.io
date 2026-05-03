@@ -44,7 +44,7 @@ export function ThemeToggle({ variant = "floating" }: Props) {
       transition={{ delay: 0.4, type: "spring", stiffness: 220, damping: 22 }}
       whileHover={{ scale: 1.06 }}
       whileTap={{ scale: 0.94 }}
-      className="fixed z-[60] bottom-5 right-5 md:bottom-6 md:right-6 group"
+      className="fixed z-[60] bottom-28 right-4 md:bottom-6 md:right-6 group"
     >
       {/* Halo lumineux */}
       <span

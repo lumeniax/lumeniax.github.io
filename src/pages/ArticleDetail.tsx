@@ -8,18 +8,13 @@ import { ArticleComments } from "@/components/ArticleComments";
 import { AuthorSignature } from "@/components/AuthorSignature";
 import { ShareButton } from "@/components/ShareButton";
 import { useArticleMeta } from "@/hooks/useArticleMeta";
-
-interface ArticleMeta {
-  title: string;
-  category: string;
-  date: string;
-  icon: string;
-  description: string;
-  readTime: number;
-  slug: string;
-  file: string;
-  contentFile: string;
-}
+import {
+  fetchArticleManifest,
+  getArticleContentUrl,
+  getArticleHref,
+  resolveArticleBySlug,
+  type ArticleMeta,
+} from "@/lib/article-manifest";
 
 export default function ArticleDetail() {
   const params = useParams<{ slug: string }>();
@@ -43,17 +38,20 @@ export default function ArticleDetail() {
       setMeta(null);
 
       try {
-        const articlesRes = await fetch("/articles/articles.json");
-        if (!articlesRes.ok) throw new Error("manifest fetch failed");
-        const articles: ArticleMeta[] = await articlesRes.json();
+        const articles = await fetchArticleManifest();
 
-        const found = articles.find((a) => a.slug === slug);
+        const found = resolveArticleBySlug(articles, slug);
         if (!found) {
           if (!cancelled) { setNotFound(true); setLoading(false); }
           return;
         }
 
-        const contentRes = await fetch(`/articles/content/${found.contentFile}`);
+        const contentRes = await fetch(getArticleContentUrl(found.contentFile), {
+          headers: {
+            "cache-control": "no-cache",
+            pragma: "no-cache",
+          },
+        });
         if (!contentRes.ok) {
           if (!cancelled) { setNotFound(true); setLoading(false); }
           return;
@@ -74,7 +72,7 @@ export default function ArticleDetail() {
     return () => { cancelled = true; };
   }, [slug]);
 
-  const articleUrl = `/academy/articles/${slug}`;
+  const articleUrl = meta ? getArticleHref(meta.slug) : getArticleHref(slug);
   const fullUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}${articleUrl}`
@@ -159,7 +157,7 @@ export default function ArticleDetail() {
 
           {/* Interactions d'article (likes temps réel + partage viral) */}
           <ArticleInteractions
-            articleId={slug}
+            articleId={meta.slug}
             articleTitle={meta.title}
             articleUrl={articleUrl}
             onCommentClick={() =>
@@ -168,7 +166,7 @@ export default function ArticleDetail() {
             shareSlot={
               <ShareButton
                 article={{
-                  id: slug,
+                  id: meta.slug,
                   title: meta.title,
                   content,
                   description: meta.description,
@@ -189,7 +187,7 @@ export default function ArticleDetail() {
 
           {/* Commentaires temps réel */}
           <div ref={commentsRef}>
-            <ArticleComments articleId={slug} articleTitle={meta.title} />
+            <ArticleComments articleId={meta.slug} articleTitle={meta.title} />
           </div>
 
           <motion.div

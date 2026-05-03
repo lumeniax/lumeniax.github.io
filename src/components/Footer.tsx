@@ -3,7 +3,7 @@ import { Mail, MapPin } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="bg-gradient-to-t from-card via-background to-background border-t border-primary/20 pt-20 pb-10 relative overflow-hidden">
+    <footer className="mobile-nav-footer bg-gradient-to-t from-card via-background to-background border-t border-primary/20 pt-20 pb-10 relative overflow-hidden">
       {/* Premium gradient overlay */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-0 right-1/4 w-64 h-64 bg-gradient-to-bl from-primary/5 to-transparent rounded-full blur-3xl opacity-30" />

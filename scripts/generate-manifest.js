@@ -4,6 +4,27 @@ import { join, basename } from "path";
 const ARTICLES_DIR = join(process.cwd(), "public", "articles");
 const CONTENT_DIR = join(ARTICLES_DIR, "content");
 const OUTPUT_FILE = join(ARTICLES_DIR, "articles.json");
+const SAFE_SLUG_PATTERN = /^[a-z0-9-]+$/;
+
+const LEGACY_SLUG_ALIASES = {
+  "15-utiliser-ia-pour-gagner-de-largent": [
+    "utiliser-ia-pour-gagner-de-largent",
+    "comment-utiliser-l-ia-pour-gagner-de-l-argent-en-2026-guide-pratique",
+  ],
+  "7-choses-eviter-spirituellement-puissant": [
+    "7-choses-a-eviter-pour-devenir-spirituellement-puissant",
+  ],
+};
+
+function slugify(text) {
+  return String(text)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
 
 function decodeHtmlEntities(text) {
   if (!text) return "";
@@ -132,34 +153,47 @@ async function generateManifest() {
 
   for (const file of htmlFiles) {
     try {
-      const slug = basename(file, ".html");
+      const rawSlug = basename(file, ".html");
       const html = await readFile(join(ARTICLES_DIR, file), "utf-8");
 
-      const title = extractTitle(html) || slug;
+      const title = extractTitle(html) || rawSlug;
       const category = extractMeta(html, "lumenia:category") || "Article";
       const date = extractMeta(html, "lumenia:date") || "";
       const icon = extractMeta(html, "lumenia:icon") || "✦";
       const description = extractDescription(html);
+      const slug = SAFE_SLUG_PATTERN.test(rawSlug) ? rawSlug : slugify(rawSlug);
+      const legacySlugs = Array.from(
+        new Set([
+          ...(slug !== rawSlug ? [rawSlug] : []),
+          ...(LEGACY_SLUG_ALIASES[slug] || []),
+        ]),
+      );
 
       const articleContent = extractArticleContent(html);
-      const contentFile = `${slug}.html`;
+      const contentFile = file;
       await writeFile(join(CONTENT_DIR, contentFile), articleContent, "utf-8");
 
       const bodyText = extractBodyText(html);
       const wordCount = bodyText.split(/\s+/).filter(Boolean).length;
       const readTime = Math.max(1, Math.round(wordCount / 200));
 
-      articles.push({ 
-        title, 
-        slug, 
-        category, 
-        date, 
-        icon, 
-        description, 
-        readTime, 
-        file, 
-        contentFile 
-      });
+      const article = {
+        title,
+        slug,
+        category,
+        date,
+        icon,
+        description,
+        readTime,
+        file,
+        contentFile,
+      };
+
+      if (legacySlugs.length > 0) {
+        article.legacySlugs = legacySlugs;
+      }
+
+      articles.push(article);
     } catch (err) {
       console.error(`⚠️ Erreur lors du traitement de ${file}:`, err.message);
     }

@@ -23,7 +23,7 @@ export function Layout({ children }: LayoutProps) {
       <div className="min-h-[100dvh] flex flex-col bg-background text-foreground transition-colors duration-300">
         <Navbar />
         <BackButton />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 mobile-nav-offset">{children}</main>
         <Footer />
         <ThemeToggle />
         <PWAInstallBanner />

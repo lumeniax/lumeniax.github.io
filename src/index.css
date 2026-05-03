@@ -369,3 +369,17 @@
 .glow-accent {
   box-shadow: 0 0 20px rgba(232, 185, 107, 0.2);
 }
+
+@media (max-width: 767px) {
+  .mobile-nav-offset {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.75rem);
+  }
+
+  .mobile-nav-footer {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 7rem);
+  }
+
+  .mobile-nav-dock {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+  }
+}

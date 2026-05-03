@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lumeniax-cache-v1';
+const CACHE_NAME = 'lumeniax-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -7,6 +7,60 @@ const ASSETS_TO_CACHE = [
   '/icon-512x512.png',
   '/favicon.svg'
 ];
+
+function isSameOrigin(request) {
+  return new URL(request.url).origin === self.location.origin;
+}
+
+function isArticleDataRequest(request) {
+  const { pathname } = new URL(request.url);
+  return pathname === '/articles/articles.json' || pathname.startsWith('/articles/content/');
+}
+
+function isArticlePageRequest(request) {
+  const { pathname } = new URL(request.url);
+  return pathname.startsWith('/academy/articles/');
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) {
+    return cached;
+  }
+
+  const response = await fetch(request);
+  if (response && response.status === 200 && isSameOrigin(request)) {
+    const responseToCache = response.clone();
+    caches.open(CACHE_NAME).then((cache) => {
+      cache.put(request, responseToCache);
+    });
+  }
+  return response;
+}
+
+async function networkFirst(request, { fallbackToIndex = false, cacheResponse = true } = {}) {
+  try {
+    const response = await fetch(request);
+    if (cacheResponse && response && response.status === 200 && isSameOrigin(request)) {
+      const responseToCache = response.clone();
+      caches.open(CACHE_NAME).then((cache) => {
+        cache.put(request, responseToCache);
+      });
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) {
+      return cached;
+    }
+
+    if (fallbackToIndex) {
+      return caches.match('/index.html');
+    }
+
+    throw new Error('Network unavailable');
+  }
+}
 
 // Install event - caching assets
 self.addEventListener('install', (event) => {
@@ -41,29 +95,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
-      }
-      return fetch(event.request).then((fetchResponse) => {
-        // Don't cache if not a valid response
-        if (!fetchResponse || fetchResponse.status !== 200 || fetchResponse.type !== 'basic') {
-          return fetchResponse;
-        }
-        const responseToCache = fetchResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-        return fetchResponse;
-      });
-    }).catch(() => {
-      // Fallback for offline mode if needed
-      if (event.request.mode === 'navigate') {
-        return caches.match('/index.html');
-      }
-    })
-  );
+  if (isArticleDataRequest(event.request)) {
+    event.respondWith(
+      networkFirst(event.request, { cacheResponse: false }),
+    );
+    return;
+  }
+
+  if (event.request.mode === 'navigate' || isArticlePageRequest(event.request)) {
+    event.respondWith(
+      networkFirst(event.request, { fallbackToIndex: true }),
+    );
+    return;
+  }
+
+  event.respondWith(cacheFirst(event.request));
 });
 
 // Push notification event

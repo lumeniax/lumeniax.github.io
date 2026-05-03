@@ -701,7 +701,10 @@
     "description": "La vraie puissance spirituelle naît de la mort intérieure. Découvrez les 7 choses à crucifier en vous pour porter la gloire de Dieu et marcher dans une autorité véritable.",
     "readTime": 5,
     "file": "7-choses-eviter-spirituellement-puissant.html",
-    "contentFile": "7-choses-eviter-spirituellement-puissant.html"
+    "contentFile": "7-choses-eviter-spirituellement-puissant.html",
+    "legacySlugs": [
+      "7-choses-a-eviter-pour-devenir-spirituellement-puissant"
+    ]
   },
   {
     "title": "Maîtrise de soi : pourquoi vos désirs explosent quand personne ne regarde",
@@ -746,6 +749,21 @@
     "readTime": 3,
     "file": "eloge-de-ennui-createur.html",
     "contentFile": "eloge-de-ennui-createur.html"
+  },
+  {
+    "title": "Comment Utiliser l'IA pour Gagner de l'Argent en 2026 : Guide Pratique",
+    "slug": "15-utiliser-ia-pour-gagner-de-largent",
+    "category": "IA & Technologie",
+    "date": "2 mai 2026",
+    "icon": "🤖",
+    "description": "L'IA ne va pas voler ton emploi. Elle va donner un avantage compétitif massif aux gens qui savent l'utiliser. Et ces gens peuvent être toi — dès aujourd'hui.",
+    "readTime": 2,
+    "file": "15-utiliser-ia-pour-gagner-de-largent.html",
+    "contentFile": "15-utiliser-ia-pour-gagner-de-largent.html",
+    "legacySlugs": [
+      "utiliser-ia-pour-gagner-de-largent",
+      "comment-utiliser-l-ia-pour-gagner-de-l-argent-en-2026-guide-pratique"
+    ]
   },
   {
     "title": "Épigénétique : Pourquoi votre ADN n'est pas votre destin",
@@ -870,14 +888,17 @@
   },
   {
     "title": "L'illusion de la certitude : le mur qui freine ton évolution",
-    "slug": "l'illusion-de-la-certitude-_-le-mur-qui-freine-ton-évolution",
+    "slug": "l-illusion-de-la-certitude-le-mur-qui-freine-ton-evolution",
     "category": "Philosophie",
     "date": "1 avril 2026",
     "icon": "🌊",
     "description": "Pourquoi vouloir tout contrôler nous empêche de progresser. Apprenez à embrasser l'incertitude pour libérer votre esprit.",
     "readTime": 3,
     "file": "l'illusion-de-la-certitude-_-le-mur-qui-freine-ton-évolution.html",
-    "contentFile": "l'illusion-de-la-certitude-_-le-mur-qui-freine-ton-évolution.html"
+    "contentFile": "l'illusion-de-la-certitude-_-le-mur-qui-freine-ton-évolution.html",
+    "legacySlugs": [
+      "l'illusion-de-la-certitude-_-le-mur-qui-freine-ton-évolution"
+    ]
   },
   {
     "title": "La vérité que tu fuis",

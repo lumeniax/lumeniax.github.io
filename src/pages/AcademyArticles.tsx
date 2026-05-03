@@ -14,17 +14,13 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  fetchArticleManifest,
+  getArticleHref,
+  type ArticleMeta,
+} from "@/lib/article-manifest";
 
-interface Article {
-  title: string;
-  slug: string;
-  category: string;
-  date: string;
-  icon: string;
-  description: string;
-  readTime: number;
-  file: string;
-}
+type Article = ArticleMeta;
 
 type SortOption = "recent" | "oldest" | "title";
 
@@ -66,21 +62,21 @@ export default function AcademyArticles() {
   const stripRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const timestamp = new Date().getTime();
-    fetch(`/articles/articles.json?t=${timestamp}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Impossible de charger les articles.");
-        return res.json();
-      })
-      .then((data: Article[]) => {
+    const controller = new AbortController();
+
+    fetchArticleManifest(controller.signal)
+      .then((data) => {
         setArticles(data);
         setLoading(false);
       })
       .catch((err) => {
+        if (controller.signal.aborted) return;
         console.error("Erreur chargement articles:", err);
         setError(err.message);
         setLoading(false);
       });
+
+    return () => controller.abort();
   }, []);
 
   // Persistance session
@@ -534,7 +530,7 @@ export default function AcademyArticles() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredArticles.map((article, i) => (
-                  <Link key={article.slug} href={`/academy/articles/${article.slug}`}>
+                  <Link key={article.slug} href={getArticleHref(article.slug)}>
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}

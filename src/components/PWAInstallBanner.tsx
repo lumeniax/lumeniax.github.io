@@ -43,7 +43,7 @@ export const PWAInstallBanner: React.FC = () => {
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-20 left-4 right-4 md:left-auto md:right-4 md:w-80 z-[55]"
+          className="fixed bottom-44 left-4 right-4 md:bottom-4 md:left-auto md:right-4 md:w-80 z-[55]"
         >
           <div className="bg-card/95 backdrop-blur-md border border-primary/20 p-4 rounded-xl shadow-2xl flex flex-col gap-3">
             <div className="flex justify-between items-start">

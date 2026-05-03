@@ -1,3 +1,5 @@
+import { fetchArticleManifest, getArticleHref } from "@/lib/article-manifest";
+
 export type SearchResult = {
   title: string;
   description: string;
@@ -28,13 +30,12 @@ export const STUDIO_SERVICES: SearchResult[] = [
 // Cette fonction sera utilisée pour fusionner les articles du JSON avec les pages statiques
 export async function getSearchIndex(): Promise<SearchResult[]> {
   try {
-    const response = await fetch('/articles/articles.json');
-    const articles = await response.json();
+    const articles = await fetchArticleManifest();
     
-    const articleResults: SearchResult[] = articles.map((a: any) => ({
+    const articleResults: SearchResult[] = articles.map((a) => ({
       title: a.title,
       description: a.description || `Article dans la catégorie ${a.category}`,
-      url: `/academy/articles/${a.slug}`,
+      url: getArticleHref(a.slug),
       category: a.category,
       type: 'article'
     }));

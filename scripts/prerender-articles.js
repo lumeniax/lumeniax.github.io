@@ -19,7 +19,7 @@ const ROOT        = process.cwd();
 const DIST_DIR    = join(ROOT, "dist");
 const TEMPLATE    = join(DIST_DIR, "index.html");
 const MANIFEST    = join(ROOT, "public", "articles", "articles.json");
-const SITE_ORIGIN = process.env.SITE_ORIGIN || "https://lumeniax.com";
+const SITE_ORIGIN = process.env.SITE_ORIGIN || "https://lumeniax.github.io";
 const SITE_NAME   = "Lumeniax";
 
 function escapeHtml(s = "") {
@@ -97,7 +97,7 @@ async function main() {
   for (const a of articles) {
     if (!a?.slug || !a?.title) continue;
 
-    const url = `${SITE_ORIGIN}/academy/articles/${a.slug}`;
+    const url = `${SITE_ORIGIN}/academy/articles/${encodeURIComponent(a.slug)}`;
     const image = `${SITE_ORIGIN}/opengraph.jpg`;
     const description = (a.description || a.title).slice(0, 280);
 
