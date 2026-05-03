@@ -1,17 +1,9 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Bouton de partage moderne avec :
-//  - génération automatique d'un résumé viral IA (avec loader)
-//  - menu animé pour WhatsApp / Facebook / Messenger / Telegram / X / Copier
-//  - Web Share API en priorité sur mobile
-//  - score de viralité affiché dans le menu
-//  - feedback visuel (toast) à chaque étape
-// ─────────────────────────────────────────────────────────────────────────────
-
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Check,
   Copy,
+  Download,
   Facebook,
   Loader2,
   MessageCircle,
@@ -21,18 +13,16 @@ import {
   X as XIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import {
-  generateShareSummary,
-  type ArticleInput,
-  type ViralSummary,
-} from "@/lib/viral-summary";
+import { prepareArticleShare, warmArticleShare, type PreparedSharePayload } from "@/lib/article-share-kit";
+import type { ArticleInput } from "@/lib/viral-summary";
 import {
   canUseWebShare,
+  downloadSharePoster,
   isMobile,
   shareNative,
   shareToClipboard,
   shareToNetwork,
-  type SharePayload,
+  type ClipboardState,
   type ShareNetwork,
 } from "@/lib/share";
 
@@ -48,51 +38,110 @@ const NETWORKS: Array<{
   Icon: typeof Facebook;
   color: string;
 }> = [
-  { id: "whatsapp",  label: "WhatsApp",  Icon: MessageCircle, color: "text-emerald-500" },
-  { id: "facebook",  label: "Facebook",  Icon: Facebook,      color: "text-blue-600" },
-  { id: "messenger", label: "Messenger", Icon: Send,          color: "text-sky-500" },
-  { id: "telegram",  label: "Telegram",  Icon: Send,          color: "text-cyan-500" },
-  { id: "twitter",   label: "X",         Icon: XIcon,         color: "text-foreground" },
+  { id: "whatsapp", label: "WhatsApp", Icon: MessageCircle, color: "text-emerald-500" },
+  { id: "facebook", label: "Facebook", Icon: Facebook, color: "text-blue-500" },
+  { id: "messenger", label: "Messenger", Icon: Send, color: "text-sky-500" },
+  { id: "telegram", label: "Telegram", Icon: Send, color: "text-cyan-500" },
+  { id: "twitter", label: "X", Icon: XIcon, color: "text-foreground" },
 ];
+
+function clipboardDescription(clipboard: ClipboardState) {
+  if (clipboard.image) {
+    return "Texte et image sont prêts dans le presse-papiers.";
+  }
+  if (clipboard.text) {
+    return "Résumé et lien sont prêts dans le presse-papiers.";
+  }
+  return "Le partage est prêt.";
+}
 
 export function ShareButton({ article, url, className }: ShareButtonProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [summary, setSummary] = useState<ViralSummary | null>(null);
-  const [justCopied, setJustCopied] = useState(false);
+  const [payload, setPayload] = useState<PreparedSharePayload | null>(null);
+  const [feedback, setFeedback] = useState<"idle" | "copied" | "downloaded">("idle");
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const feedbackTimerRef = useRef<number | null>(null);
 
-  // Ferme le menu sur clic extérieur ou Escape.
   useEffect(() => {
     if (!open) return;
-    const onClick = (e: MouseEvent) => {
-      if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false);
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
     };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
     return () => {
-      document.removeEventListener("mousedown", onClick);
-      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [open]);
 
-  async function ensureSummary(): Promise<ViralSummary | null> {
-    if (summary) return summary;
+  useEffect(() => {
+    let cancelled = false;
+    setPayload(null);
+    warmArticleShare(article, url);
+
+    prepareArticleShare(article, url)
+      .then((prepared) => {
+        if (!cancelled) setPayload(prepared);
+      })
+      .catch(() => {
+        if (!cancelled) setPayload(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    article.id,
+    article.title,
+    article.content,
+    article.description,
+    article.category,
+    article.icon,
+    url,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) {
+        window.clearTimeout(feedbackTimerRef.current);
+      }
+    };
+  }, []);
+
+  function setTransientFeedback(next: "copied" | "downloaded") {
+    setFeedback(next);
+    if (feedbackTimerRef.current) {
+      window.clearTimeout(feedbackTimerRef.current);
+    }
+    feedbackTimerRef.current = window.setTimeout(() => {
+      setFeedback("idle");
+      feedbackTimerRef.current = null;
+    }, 1800);
+  }
+
+  async function ensurePrepared() {
+    if (payload) return payload;
+
     setLoading(true);
-    toast({
-      title: "Résumé généré…",
-      description: "Création d'une accroche virale pour le partage.",
-    });
     try {
-      const s = await generateShareSummary(article);
-      setSummary(s);
-      return s;
-    } catch (err) {
+      const prepared = await prepareArticleShare(article, url);
+      setPayload(prepared);
+      return prepared;
+    } catch (error) {
       toast({
-        title: "Génération impossible",
-        description: (err as Error).message,
+        title: "Partage indisponible",
+        description: (error as Error).message,
       });
       return null;
     } finally {
@@ -101,128 +150,225 @@ export function ShareButton({ article, url, className }: ShareButtonProps) {
   }
 
   async function handlePrimary() {
-    // Sur mobile, on tente direct la Web Share API native après génération.
-    const s = await ensureSummary();
-    if (!s) return;
+    const prepared = await ensurePrepared();
+    if (!prepared) return;
 
     if (canUseWebShare() && isMobile()) {
-      const payload: SharePayload = { articleId: article.id, title: article.title, url, summary: s };
-      const out = await shareNative(payload);
-      if (out.kind === "native") return;
-      if (out.kind === "clipboard") {
-        flashCopied();
+      const outcome = await shareNative(prepared);
+      if (outcome.kind === "native" || outcome.kind === "cancelled") {
         return;
       }
-      if (out.kind === "cancelled") return;
+      if (outcome.kind === "clipboard") {
+        setTransientFeedback("copied");
+        toast({
+          title: "Pack copié",
+          description: clipboardDescription(outcome.clipboard),
+        });
+        return;
+      }
+      if (outcome.kind === "error") {
+        toast({
+          title: "Partage indisponible",
+          description: outcome.message,
+        });
+      }
     }
-    // Sur desktop ou si la Web Share API échoue, on ouvre le menu.
+
     setOpen(true);
   }
 
-  function flashCopied() {
-    setJustCopied(true);
-    toast({ title: "Lien copié", description: "Résumé viral + lien collés dans le presse-papiers." });
-    setTimeout(() => setJustCopied(false), 1800);
-  }
-
   async function handleNetwork(network: ShareNetwork) {
-    const s = await ensureSummary();
-    if (!s) return;
-    const payload: SharePayload = { articleId: article.id, title: article.title, url, summary: s };
-    const out = await shareToNetwork(network, payload);
-    if (out.kind === "deeplink") {
-      toast({ title: "Partage ouvert", description: `Application ${network} lancée.` });
+    const prepared = await ensurePrepared();
+    if (!prepared) return;
+
+    const outcome = await shareToNetwork(network, prepared);
+    if (outcome.kind === "deeplink") {
+      toast({
+        title: `${NETWORKS.find((entry) => entry.id === network)?.label || network} ouvert`,
+        description: clipboardDescription(outcome.clipboard),
+      });
       setOpen(false);
-    } else if (out.kind === "error") {
-      toast({ title: "Partage impossible", description: out.message });
+      return;
+    }
+
+    if (outcome.kind === "error") {
+      toast({
+        title: "Partage indisponible",
+        description: outcome.message,
+      });
     }
   }
 
   async function handleCopy() {
-    const s = await ensureSummary();
-    if (!s) return;
-    const payload: SharePayload = { articleId: article.id, title: article.title, url, summary: s };
-    const out = await shareToClipboard(payload);
-    if (out.kind === "clipboard") flashCopied();
-    else if (out.kind === "error") toast({ title: "Copie impossible", description: out.message });
+    const prepared = await ensurePrepared();
+    if (!prepared) return;
+
+    const outcome = await shareToClipboard(prepared);
+    if (outcome.kind === "clipboard") {
+      setTransientFeedback("copied");
+      toast({
+        title: "Pack copié",
+        description: clipboardDescription(outcome.clipboard),
+      });
+      return;
+    }
+
+    if (outcome.kind === "error") {
+      toast({
+        title: "Copie impossible",
+        description: outcome.message,
+      });
+    }
   }
 
+  async function handleDownload() {
+    const prepared = await ensurePrepared();
+    if (!prepared) return;
+
+    const outcome = await downloadSharePoster(prepared.poster);
+    if (outcome.kind === "download") {
+      setTransientFeedback("downloaded");
+      toast({
+        title: "Image téléchargée",
+        description: "Le visuel de partage est prêt pour vos réseaux.",
+      });
+      return;
+    }
+
+    if (outcome.kind === "error") {
+      toast({
+        title: "Téléchargement impossible",
+        description: outcome.message,
+      });
+    }
+  }
+
+  const summary = payload?.summary;
+  const poster = payload?.poster;
+
   return (
-    <div ref={wrapperRef} className={`relative inline-block ${className || ""}`}>
+    <div
+      ref={wrapperRef}
+      className={`relative inline-block ${className || ""}`}
+      onMouseEnter={() => warmArticleShare(article, url)}
+      onTouchStart={() => warmArticleShare(article, url)}
+    >
       <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.96 }}
         onClick={handlePrimary}
         disabled={loading}
-        className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/50 text-foreground/70 border border-primary/20 hover:bg-primary/10 hover:text-primary transition-all duration-300 disabled:opacity-60"
+        className="group flex items-center gap-2 rounded-full border border-primary/20 bg-background/60 px-4 py-2 text-foreground/75 shadow-[0_14px_34px_-22px_rgba(79,127,255,0.55)] backdrop-blur-sm transition-all duration-300 hover:border-primary/35 hover:bg-primary/10 hover:text-primary disabled:opacity-60"
         title="Partager cet article"
         aria-haspopup="menu"
         aria-expanded={open}
       >
+        <span className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/0 via-primary/10 to-accent/0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         {loading ? (
-          <Loader2 size={18} className="animate-spin" />
-        ) : justCopied ? (
-          <Check size={18} className="text-emerald-500" />
+          <Loader2 size={18} className="relative z-10 animate-spin" />
+        ) : feedback === "copied" ? (
+          <Check size={18} className="relative z-10 text-emerald-500" />
+        ) : feedback === "downloaded" ? (
+          <Download size={18} className="relative z-10 text-primary" />
         ) : (
-          <Share2 size={18} />
+          <Share2 size={18} className="relative z-10" />
         )}
-        <span className="text-sm font-medium">
-          {loading ? "Résumé…" : justCopied ? "Copié" : "Partager"}
+        <span className="relative z-10 text-sm font-medium">
+          {loading
+            ? "Préparation…"
+            : feedback === "copied"
+            ? "Copié"
+            : feedback === "downloaded"
+            ? "Image prête"
+            : "Partager"}
         </span>
       </motion.button>
 
       <AnimatePresence>
-        {open && (
+        {open && summary && (
           <motion.div
             role="menu"
-            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+            initial={{ opacity: 0, y: 10, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.96 }}
+            exit={{ opacity: 0, y: 10, scale: 0.96 }}
             transition={{ duration: 0.18 }}
-            className="absolute z-30 mt-2 left-0 w-[22rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-popover text-popover-foreground shadow-xl p-3"
+            className="absolute left-0 z-30 mt-3 w-[24rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.7rem] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(79,127,255,0.14),transparent_38%),linear-gradient(180deg,rgba(18,22,33,0.98),rgba(10,12,20,0.98))] p-3 text-popover-foreground shadow-[0_30px_80px_-34px_rgba(0,0,0,0.95),0_18px_48px_-32px_rgba(79,127,255,0.4)] backdrop-blur-2xl"
           >
-            {summary && (
-              <div className="px-2 pb-3 mb-2 border-b border-border/60">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Sparkles size={14} className="text-primary" />
-                  <span>Résumé viral généré</span>
-                  <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 font-medium">
-                    Score {summary.score}/10
-                  </span>
-                </div>
-                <div className="mt-2 max-h-72 overflow-y-auto pr-1">
-                  <p className="text-sm leading-relaxed whitespace-pre-line">
-                    {summary.text}
-                  </p>
-                </div>
+            <div className="mb-3 flex items-center gap-2 px-1 text-xs text-muted-foreground">
+              <Sparkles size={14} className="text-primary" />
+              <span>Pack social prêt</span>
+              <span className="ml-auto inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-medium text-foreground/80">
+                Score {summary.score}/10
+              </span>
+            </div>
+
+            {poster && (
+              <div className="mb-3 overflow-hidden rounded-[1.35rem] border border-white/10 bg-white/5">
+                <img
+                  src={poster.dataUrl}
+                  alt={poster.alt}
+                  className="block h-auto w-full"
+                  loading="lazy"
+                />
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-1">
+            <div className="mb-3 rounded-[1.25rem] border border-white/10 bg-white/5 p-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/90">
+                Hook instantané
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-foreground/88">
+                {summary.hook}
+              </p>
+              {summary.keywords.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {summary.keywords.slice(0, 3).map((keyword) => (
+                    <span
+                      key={keyword}
+                      className="rounded-full border border-white/10 bg-background/55 px-2.5 py-1 text-[11px] text-muted-foreground"
+                    >
+                      {keyword}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="grid gap-1">
               {NETWORKS.map(({ id, label, Icon, color }) => (
                 <button
                   key={id}
                   role="menuitem"
                   onClick={() => handleNetwork(id)}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors text-left"
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-white/6"
                 >
                   <Icon size={18} className={color} />
-                  <span className="text-sm">{label}</span>
+                  <span className="text-sm text-foreground/88">{label}</span>
                 </button>
               ))}
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <button
-                role="menuitem"
+                type="button"
                 onClick={handleCopy}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors text-left"
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-foreground/88 transition-colors hover:bg-white/8"
               >
-                {justCopied ? (
-                  <Check size={18} className="text-emerald-500" />
+                {feedback === "copied" ? (
+                  <Check size={16} className="text-emerald-500" />
                 ) : (
-                  <Copy size={18} className="text-muted-foreground" />
+                  <Copy size={16} className="text-muted-foreground" />
                 )}
-                <span className="text-sm">
-                  {justCopied ? "Copié dans le presse-papiers" : "Copier le résumé + lien"}
-                </span>
+                <span>Copier le pack</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-foreground/88 transition-colors hover:bg-white/8"
+              >
+                <Download size={16} className="text-muted-foreground" />
+                <span>Télécharger</span>
               </button>
             </div>
           </motion.div>

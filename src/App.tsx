@@ -1,4 +1,5 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { useEffect } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,12 +22,21 @@ import AcademyCommunaute from "@/pages/AcademyCommunaute";
 import ForumSpace from "@/pages/ForumSpace";
 import ForumPost from "@/pages/ForumPost";
 import About from "@/pages/About";
-import LumeniaxDemo from "@/pages/LumeniaxDemo";
 import Contact from "@/pages/Contact";
 import MentionsLegales from "@/pages/MentionsLegales";
 import PolitiqueConfidentialite from "@/pages/PolitiqueConfidentialite";
 
 const queryClient = new QueryClient();
+
+function LegacyLumeniaxRedirect() {
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    navigate("/about", { replace: true });
+  }, [navigate]);
+
+  return null;
+}
 
 function Router() {
   return (
@@ -56,7 +66,7 @@ function Router() {
 
         <Route path="/about" component={About} />
         <Route path="/contact" component={Contact} />
-        <Route path="/lumeniax" component={LumeniaxDemo} />
+        <Route path="/lumeniax" component={LegacyLumeniaxRedirect} />
 
         {/* Legal */}
         <Route path="/mentions-legales" component={MentionsLegales} />

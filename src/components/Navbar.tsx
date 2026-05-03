@@ -10,7 +10,6 @@ import {
   Home,
   Info,
   Mail,
-  PanelsTopLeft,
   Sparkles,
   X,
 } from "lucide-react";
@@ -87,7 +86,7 @@ export function Navbar() {
   const isStudio = location.startsWith("/studio");
   const isAcademy = location.startsWith("/academy");
   const isContact = location === "/contact";
-  const isMoreRoute = location === "/about" || location === "/lumeniax";
+  const isMoreRoute = location === "/about";
   const activeMobileDockKey = mobileMenuOpen
     ? "plus"
     : isHome
@@ -146,15 +145,6 @@ export function Navbar() {
   ];
 
   const mobileMenuItems: MobileMenuItem[] = [
-    {
-      href: "/lumeniax",
-      title: "Lumeniax",
-      description: "Démo, vision produit et présence signature de la marque.",
-      icon: PanelsTopLeft,
-      accentClassName: "text-primary",
-      glowClassName:
-        "from-primary/18 via-primary/8 to-transparent shadow-[0_18px_40px_-24px_rgba(79,127,255,0.7)]",
-    },
     {
       href: "/about",
       title: "À Propos",
@@ -247,18 +237,6 @@ export function Navbar() {
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary to-accent rounded-full" />
               )}
             </div>
-
-            <Link href="/lumeniax">
-              <span
-                className={`text-sm font-semibold tracking-wide transition-all duration-300 ${
-                  location === "/lumeniax"
-                    ? "text-primary drop-shadow-lg"
-                    : "text-foreground/70 hover:text-primary hover:drop-shadow-md"
-                }`}
-              >
-                LUMENIAX
-              </span>
-            </Link>
 
             <Link href="/about">
               <span
